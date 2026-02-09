@@ -17,7 +17,7 @@ The Data Quality Framework uses SQLite as its database backend. The database fil
 
 ### 1. `data_quality_rules`
 
-Stores the active rules used for validation. The framework runs all active rules from this table (e.g. when running `scripts/run_expectations_on_sample.py` or `DataQualityValidator.validate_dataset()`).
+Stores the active rules used for validation. The framework runs all active rules from this table (e.g. when running `scripts/run_expectations.py` or `DataQualityValidator.validate_dataset()`).
 
 #### Columns
 

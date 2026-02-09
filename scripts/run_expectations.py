@@ -5,8 +5,8 @@ Rules are read from the data_quality_rules table (active only). Results are opti
 saved to validation_results.
 
 Usage (from project root):
-  python scripts/run_expectations_on_sample.py
-  python scripts/run_expectations_on_sample.py --file data/sample_customers_100.csv --dataset-name customers --save-results
+  python scripts/run_expectations.py
+  python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results
 """
 import sys
 import os
@@ -19,6 +19,7 @@ if _root not in sys.path:
 import pandas as pd
 from dq_framework.database import db_manager
 from dq_framework.validator import DataQualityValidator
+from db_init import seed_data_quality_rules_if_empty
 
 DEFAULT_CSV = "data/sample_customers_100.csv"
 DEFAULT_DATASET = "customers"
@@ -41,6 +42,7 @@ def main():
 
     print("\n1. Initializing database...")
     db_manager.create_tables()
+    seed_data_quality_rules_if_empty()
     print("   Database ready.")
 
     csv_path = args.file

@@ -83,7 +83,7 @@ def main():
         db_manager.create_tables()
         seed_data_quality_rules_if_empty()
         print("  Database tables created successfully.")
-        print("  Run validations: python scripts/run_expectations_on_sample.py")
+        print("  Run validations: python scripts/run_expectations.py")
     except Exception as e:
         print(f"  Error: {e}", file=sys.stderr)
         sys.exit(1)

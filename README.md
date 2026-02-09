@@ -84,7 +84,7 @@ From the project root:
 | One-time DB setup          | `python db_init.py`              |
 | Basic rules + validation   | `python examples/basic_usage.py` |
 | Regex, stats, table rules  | `python examples/advanced_usage.py` |
-| Run all DB rules on sample CSV (100 rows) | `python scripts/run_expectations_on_sample.py --save-results --verbose` |
+| Run all DB rules on sample CSV (100 rows) | `python scripts/run_expectations.py --save-results --verbose` |
 
 Make sure you’ve run `python db_init.py` at least once (or the example scripts will create the tables when you run them).
 
@@ -312,7 +312,7 @@ dq-ge-poc/
 │   └── advanced_usage.py
 ├── scripts/
 │   ├── init_database.py    ← Alternative to db_init.py (tables only)
-│   └── run_expectations_on_sample.py  ← Run active rules from data_quality_rules on a CSV
+│   └── run_expectations.py  ← Run active rules from data_quality_rules on a CSV
 ├── requirements.txt
 ├── setup.py
 ├── .env.example
