@@ -5,8 +5,26 @@ Repository for validation_results table. Single responsibility: validation resul
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
+import numpy as np
 
 from dq_framework.database import DataQualityRule, ValidationResult
+
+
+def _sanitize_for_json(obj: Any) -> Any:
+    """Convert numpy types and other non-JSON-serializable objects for DB storage."""
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(v) for v in obj]
+    if isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    if isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    return obj
 
 
 class ValidationResultRepository:
@@ -26,11 +44,12 @@ class ValidationResultRepository:
         validation_timestamp: Optional[datetime] = None,
     ) -> ValidationResult:
         """Persist a single validation result."""
+        sanitized_result = _sanitize_for_json(result) if result is not None else None
         vr = ValidationResult(
             rule_id=rule_id,
             validation_timestamp=validation_timestamp or datetime.now(),
             success=success,
-            result=result,
+            result=sanitized_result,
             exception_info=exception_info,
             dataset_name=dataset_name,
             batch_identifier=batch_identifier,

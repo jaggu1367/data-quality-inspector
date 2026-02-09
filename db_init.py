@@ -22,6 +22,7 @@ from dq_framework.database import db_manager, DataQualityRule
 from dq_framework.config import config
 
 # Default rows for data_quality_rules (seed only when table is empty).
+# For comprehensive rules (2+ per expectation type), run: python scripts/seed_comprehensive_rules.py
 DEFAULT_RULES = [
     {
         "rule_name": "customer_id_not_null",

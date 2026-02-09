@@ -31,6 +31,7 @@ def main():
     )
     parser.add_argument("--file", default=DEFAULT_CSV, help=f"Path to CSV (default: {DEFAULT_CSV})")
     parser.add_argument("--dataset-name", default=DEFAULT_DATASET, help=f"Dataset name for rules (default: {DEFAULT_DATASET})")
+    parser.add_argument("--comprehensive", action="store_true", help="Seed 2+ rules per expectation type before running")
     parser.add_argument("--batch-id", default=None, help="Optional batch identifier for validation_results")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
@@ -42,7 +43,11 @@ def main():
 
     print("\n1. Initializing database...")
     db_manager.create_tables()
-    seed_data_quality_rules_if_empty()
+    if args.comprehensive:
+        import subprocess
+        subprocess.run([sys.executable, os.path.join(_root, "scripts", "seed_comprehensive_rules.py")], check=True, cwd=_root)
+    else:
+        seed_data_quality_rules_if_empty()
     print("   Database ready.")
 
     csv_path = args.file
@@ -84,11 +89,14 @@ def main():
             print(f"    [{symbol}] {rule_name}")
             if not ok:
                 if rule_result.get("exception_info"):
-                    print(f"        Error: {rule_result['exception_info'][:200]}")
-                elif rule_result.get("result") and isinstance(rule_result["result"], dict):
-                    res = rule_result["result"].get("result", {})
-                    if "unexpected_count" in res:
-                        print(f"        Unexpected count: {res['unexpected_count']}")
+                    err = rule_result["exception_info"]
+                    print(f"        Error: {(err or '')[:200]}")
+                else:
+                    res = (rule_result.get("result") or {})
+                    if isinstance(res, dict):
+                        inner = res.get("result") or res
+                        if isinstance(inner, dict) and "unexpected_count" in inner:
+                            print(f"        Unexpected count: {inner['unexpected_count']}")
 
     if args.save_results:
         print("\n  Validation results saved to validation_results table.")
