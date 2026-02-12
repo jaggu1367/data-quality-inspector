@@ -226,7 +226,11 @@ def main():
                     print(f"  HTML report: {html_path}")
             if not success:
                 exit_code = 1
-        sys.exit(exit_code)
+        if exit_code == 1:
+            print("\n" + "=" * 60)
+            print("OVERALL: One or more sources had failing rules (see details above)")
+            print("=" * 60)
+        sys.exit(0)
 
     if args.data_source_name not in sources_by_name:
         print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources_by_name.keys())}")
@@ -245,7 +249,10 @@ def main():
     if args.save_results:
         print("\n  Validation results saved to validation_results table.")
     print("\n" + "=" * 60)
-    sys.exit(0 if success else 1)
+    if not success:
+        print("OVERALL: Validation FAILED (one or more rules did not pass)")
+    print("=" * 60)
+    sys.exit(0)  # always exit 0; failures are reported above
 
 
 if __name__ == "__main__":

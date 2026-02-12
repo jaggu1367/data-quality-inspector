@@ -95,6 +95,13 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
     layer1 = _build_layer1_html(source_info)
     layer2 = _build_layer2_html(dq_report)
     dsn = _escape_html(source_info.get("data_source_name", "Data Quality Report"))
+    is_failed = not dq_report.get("success", False)
+    failure_banner = ""
+    if is_failed:
+        failure_banner = """
+  <div class="overall-failure-banner">
+    &#10060; VALIDATION FAILED &mdash; One or more data quality rules did not pass
+  </div>"""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +110,7 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
   <title>Data Quality Report: {dsn}</title>
   <style>
     body {{ font-family: system-ui, -apple-system, sans-serif; margin: 2rem; max-width: 900px; }}
+    .overall-failure-banner {{ background: #c33; color: white; font-weight: 700; font-size: 1.1rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }}
     h1 {{ color: #1a1a2e; border-bottom: 2px solid #16213e; padding-bottom: 0.5rem; }}
     h2 {{ color: #16213e; font-size: 1.1rem; margin-top: 1.5rem; }}
     h3 {{ color: #0f3460; font-size: 1rem; margin-top: 1rem; }}
@@ -125,6 +133,7 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
   </style>
 </head>
 <body>
+{failure_banner}
   <h1>Data Quality Report: {dsn}</h1>
 {layer1}
 {layer2}
