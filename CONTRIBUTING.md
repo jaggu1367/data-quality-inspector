@@ -35,9 +35,9 @@ Thank you for your interest in contributing to the Data Quality Framework!
 ## Running Tests
 
 ```bash
-# Run example scripts to verify functionality
-python examples/basic_usage.py
-python examples/advanced_usage.py
+# Verify the framework works
+python scripts/seed_dq_rules.py
+python scripts/run_expectations.py --data-source-name customers_csv
 ```
 
 ## Code Style
@@ -51,7 +51,7 @@ python examples/advanced_usage.py
 
 1. Create a feature branch
 2. Make your changes
-3. Add tests/examples if applicable
+3. Add tests if applicable
 4. Update documentation
 5. Submit a pull request
 

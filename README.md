@@ -37,10 +37,11 @@ You should see: "Database tables created successfully." A file `dq_framework.db`
 ### 3. Run a demo
 
 ```bash
-python examples/basic_usage.py
+python scripts/seed_dq_rules.py
+python scripts/run_expectations.py --data-source-name customers_csv --save-results
 ```
 
-This creates sample rules, runs them on sample data, and shows the results. You're done.
+This loads rules from `rules/customers.json` and runs them on the sample data. You'll see pass/fail results for each rule.
 
 ---
 
@@ -49,8 +50,6 @@ This creates sample rules, runs them on sample data, and shows the results. You'
 | Command | What it does |
 |---------|--------------|
 | `python db_init.py` | Create the database (run once) |
-| `python examples/basic_usage.py` | Run a full demo |
-| `python examples/advanced_usage.py` | More examples (regex, stats, etc.) |
 | `python scripts/seed_dq_rules.py` | Load rules from `rules/*.json` into the database |
 | `python scripts/run_expectations.py --data-source-name customers_csv --save-results` | Check data from a CSV source |
 | `python scripts/run_expectations.py --all --save-results` | Check all data sources in config |
@@ -180,7 +179,6 @@ with DataQualityValidator() as validator:
 ├── config/data_sources.json   Data source definitions
 ├── db_init.py                 One-time setup (creates database)
 ├── dq_framework/              Main package
-├── examples/                  basic_usage.py, advanced_usage.py
 ├── rules/                     JSON rule files (customers.json, etc.)
 ├── scripts/
 │   ├── load_csv_to_sqlite.py  Load CSV into data_store.db
