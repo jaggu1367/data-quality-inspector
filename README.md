@@ -70,6 +70,7 @@ This loads rules from `rules/customers.json` and runs them on the sample data. Y
 | `python scripts/run_expectations.py --data-source-name customers_csv --save-results` | Check one data source |
 | `python scripts/run_expectations.py --all --save-results` | Check all data sources |
 | `python scripts/run_expectations.py --data-source-name customers_csv --seed-dq-rules` | Load rules for this source, then validate |
+| `python scripts/run_expectations.py --data-source-name customers_csv --send-report` | Run validation and generate reports (email and/or HTML per config) |
 | `python scripts/seed_dq_rules.py --data-source-name customers_csv` | Load only customers rules (keeps others) |
 
 ---
@@ -201,12 +202,46 @@ with DataQualityValidator() as validator:
 - **Database:** Uses `dq_framework.db` in the project root by default.
 - **Custom path:** Create a `.env` file with `DB_PATH=path/to/your.db`.
 
+### Reports (Email and HTML)
+
+Use `--send-report` when running expectations to generate reports. Both report types use the same two-layer content:
+- **Layer 1:** Input data source details (name, type, path/table, row count, columns, timestamp)
+- **Layer 2:** Data quality report (overall status, passed/failed counts, per-rule results)
+
+Configure in `config/dq_report_config.json`:
+
+```json
+{
+  "email": {
+    "enabled": false,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "use_tls": true,
+    "username": "",
+    "password": "",
+    "from_address": "",
+    "to_addresses": [],
+    "subject": "Data Quality Report: {data_source_name}"
+  },
+  "html": {
+    "enabled": true,
+    "output_dir": "html_reports"
+  }
+}
+```
+
+- **Email:** Set `email.enabled` to `true` and configure SMTP when you have credentials. When disabled or `to_addresses` is empty, no email is sent.
+- **HTML:** Set `html.enabled` to `true` to write reports to `output_dir` (relative to project root or absolute). Files are named `{data_source_name}_{timestamp}.html`.
+
+Use `--reports-config` to point to a custom config path.
+
 ---
 
 ## Project layout
 
 ```
 ├── config/data_sources.json   Data source definitions
+├── config/dq_report_config.json   Report config (email, HTML)
 ├── db_init.py                 One-time setup (creates database)
 ├── dq_framework/              Main package
 ├── rules/                     JSON rule files (customers.json, etc.)
@@ -215,7 +250,8 @@ with DataQualityValidator() as validator:
 │   ├── run_expectations.py    Run checks on data
 │   └── seed_dq_rules.py      Load rules from JSON into database
 ├── dq_framework.db            Rules and validation history (created on first run)
-└── data_store.db              Loaded CSV data (created by load_csv_to_sqlite)
+├── data_store.db              Loaded CSV data (created by load_csv_to_sqlite)
+└── html_reports/              HTML reports (when html.enabled in dq_report_config)
 ```
 
 ---

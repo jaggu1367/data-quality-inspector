@@ -13,11 +13,13 @@ Usage (from project root):
   python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
   python scripts/run_expectations.py --data-source-name orders_csv
   python scripts/run_expectations.py --all --save-results   # run all sources from config
+  python scripts/run_expectations.py --data-source-name customers_csv --send-report  # email report
 """
 import json
 import sys
 import os
 import argparse
+from datetime import datetime
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _root not in sys.path:
@@ -27,9 +29,12 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dq_framework.database import db_manager
 from dq_framework.validator import DataQualityValidator
+from dq_framework.email_report import load_reports_config, send_email_report
+from dq_framework.html_report import maybe_write_html_report
 from db_init import seed_data_quality_rules_if_empty
 
 DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
+DEFAULT_REPORTS_CONFIG = "config/dq_report_config.json"
 
 
 def load_sources_config(config_path: str) -> dict:
@@ -73,13 +78,26 @@ def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFr
     raise ValueError(f"Unknown source type: {source_type}. Expected 'csv' or 'sqlite'.")
 
 
+def _build_path_or_table(source_config: dict, root: str) -> str:
+    """Build path_or_table string for source config."""
+    st = source_config.get("type", "csv").lower()
+    if st == "csv":
+        p = source_config.get("path", "")
+        return p if os.path.isabs(p) else os.path.join(root, p)
+    if st == "sqlite":
+        db = source_config.get("database", "")
+        tbl = source_config.get("table", "")
+        return f"{db}/{tbl}" if db and tbl else "N/A"
+    return "N/A"
+
+
 def _run_one(
     data_source_name: str,
     source_config: dict,
     args: argparse.Namespace,
     root: str,
-) -> bool:
-    """Run expectations for one source. Returns True if all passed, False otherwise."""
+) -> tuple[bool, dict, dict]:
+    """Run expectations for one source. Returns (success, source_info, result)."""
     source_type = source_config.get("type", "csv")
     print(f"\n{'='*60}")
     print(f"Source: {data_source_name} ({source_type})")
@@ -90,10 +108,19 @@ def _run_one(
             rules_key = args.dataset_name
     except (FileNotFoundError, ValueError) as e:
         print(f"  Error: {e}")
-        return False
+        return False, {}, {}
 
     print(f"  Rows: {len(df)}, Columns: {list(df.columns)}")
     print(f"  Running active rules for '{rules_key}'...")
+
+    source_info = {
+        "data_source_name": data_source_name,
+        "source_type": source_type,
+        "path_or_table": _build_path_or_table(source_config, root),
+        "row_count": len(df),
+        "columns": list(df.columns),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
 
     batch_id = args.batch_id or (f"{data_source_name}" if args.all else None)
     with DataQualityValidator() as validator:
@@ -120,7 +147,7 @@ def _run_one(
             if not ok and rule_result.get("exception_info"):
                 print(f"        Error: {(rule_result['exception_info'] or '')[:150]}")
 
-    return result["success"]
+    return result["success"], source_info, result
 
 
 def main():
@@ -148,6 +175,8 @@ def main():
     parser.add_argument("--batch-id", default=None, help="Optional batch identifier for validation_results")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
+    parser.add_argument("--send-report", action="store_true", help="Generate reports (email and/or HTML per config/dq_report_config.json)")
+    parser.add_argument("--reports-config", default=DEFAULT_REPORTS_CONFIG, help=f"Path to reports config (default: {DEFAULT_REPORTS_CONFIG})")
     args = parser.parse_args()
 
     if not args.all and not args.data_source_name:
@@ -185,16 +214,34 @@ def main():
         exit_code = 0
         for dsn in data_source_names:
             source_config = sources_by_name[dsn]
-            if _run_one(dsn, source_config, args, _root):
-                continue
-            exit_code = 1
+            success, source_info, result = _run_one(dsn, source_config, args, _root)
+            if args.send_report and source_info and result:
+                try:
+                    if send_email_report(source_info, result, args.reports_config, _root):
+                        print("  Email report sent.")
+                except RuntimeError as e:
+                    print(f"  Warning: {e}")
+                html_path = maybe_write_html_report(source_info, result, args.reports_config, _root)
+                if html_path:
+                    print(f"  HTML report: {html_path}")
+            if not success:
+                exit_code = 1
         sys.exit(exit_code)
 
     if args.data_source_name not in sources_by_name:
         print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources_by_name.keys())}")
         sys.exit(1)
 
-    success = _run_one(args.data_source_name, sources_by_name[args.data_source_name], args, _root)
+    success, source_info, result = _run_one(args.data_source_name, sources_by_name[args.data_source_name], args, _root)
+    if args.send_report and source_info and result:
+        try:
+            if send_email_report(source_info, result, args.reports_config, _root):
+                print("\n  Email report sent.")
+        except RuntimeError as e:
+            print(f"\n  Warning: {e}")
+        html_path = maybe_write_html_report(source_info, result, args.reports_config, _root)
+        if html_path:
+            print(f"\n  HTML report: {html_path}")
     if args.save_results:
         print("\n  Validation results saved to validation_results table.")
     print("\n" + "=" * 60)

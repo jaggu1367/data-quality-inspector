@@ -37,6 +37,9 @@ ENV/
 .env
 .env.local
 
+# Reports
+html_reports/
+
 # Great Expectations
 great_expectations/
 .great_expectations/

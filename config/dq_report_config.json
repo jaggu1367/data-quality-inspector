@@ -1,0 +1,17 @@
+{
+  "email": {
+    "enabled": false,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "use_tls": true,
+    "username": "",
+    "password": "",
+    "from_address": "",
+    "to_addresses": [],
+    "subject": "Data Quality Report: {data_source_name}"
+  },
+  "html": {
+    "enabled": true,
+    "output_dir": "html_reports"
+  }
+}
