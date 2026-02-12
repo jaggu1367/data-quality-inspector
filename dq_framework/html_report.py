@@ -39,7 +39,20 @@ def _build_layer1_html(source_info: Dict[str, Any]) -> str:
     </section>"""
 
 
-def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
+def _extract_column(rule_result: Dict[str, Any]) -> str:
+    """Extract column name(s) from rule expectation_config kwargs."""
+    cfg = rule_result.get("expectation_config") or {}
+    kwargs = cfg.get("kwargs") or {}
+    col = kwargs.get("column")
+    if col:
+        return str(col)
+    col_list = kwargs.get("column_list") or kwargs.get("column_set")
+    if col_list and isinstance(col_list, (list, tuple)):
+        return ", ".join(str(c) for c in col_list)
+    return "N/A"
+
+
+def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -> str:
     """Data quality report as HTML."""
     summary = dq_report.get("summary", {})
     total = summary.get("total_rules", 0)
@@ -47,15 +60,17 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
     failed = summary.get("failed", 0)
     overall = "PASSED" if dq_report.get("success", False) else "FAILED"
     status_class = "status-passed" if overall == "PASSED" else "status-failed"
+    data_source_name = source_info.get("data_source_name", "N/A")
 
     PASS_SYMBOL = "&#9989;"   # ✅
     FAIL_SYMBOL = "&#10060;"  # ❌
     rows = []
-    for rule_name, rule_result in dq_report.get("results", {}).items():
+    for sno, (rule_name, rule_result) in enumerate(dq_report.get("results", {}).items(), 1):
         ok = rule_result.get("success", False)
         symbol = PASS_SYMBOL if ok else FAIL_SYMBOL
         title = "Pass" if ok else "Fail"
         row_class = "pass" if ok else "fail"
+        column = _extract_column(rule_result)
         detail = ""
         if not ok:
             exc = rule_result.get("exception_info")
@@ -67,9 +82,18 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
                 if isinstance(inner, dict) and "unexpected_count" in inner:
                     detail = f"Unexpected count: {inner['unexpected_count']}"
         detail_cell = f'<span class="detail">{_escape_html(detail)}</span>' if detail else ""
-        rows.append(f"        <tr class=\"{row_class}\"><td class=\"status-cell\"><span class=\"status-icon\" title=\"{title}\">{symbol}</span></td><td>{_escape_html(rule_name)}</td><td>{detail_cell}</td></tr>")
+        rows.append(
+            f"        <tr class=\"{row_class}\">"
+            f"<td class=\"sno-cell\">{sno}</td>"
+            f"<td>{_escape_html(data_source_name)}</td>"
+            f"<td>{_escape_html(column)}</td>"
+            f"<td>{_escape_html(rule_name)}</td>"
+            f"<td>{detail_cell}</td>"
+            f"<td class=\"status-cell\"><span class=\"status-icon\" title=\"{title}\">{symbol}</span></td>"
+            f"</tr>"
+        )
 
-    rows_html = "\n".join(rows) if rows else "        <tr><td colspan=\"3\">No rules executed.</td></tr>"
+    rows_html = "\n".join(rows) if rows else "        <tr><td colspan=\"6\">No rules executed.</td></tr>"
 
     return f"""
     <section class="layer">
@@ -82,7 +106,7 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
       </table>
       <h3>Per-rule results</h3>
       <table class="rules">
-        <thead><tr><th class=\"status-col\">Status</th><th>Rule</th><th>Details</th></tr></thead>
+        <thead><tr><th>Sno</th><th>Data Source Name</th><th>Column</th><th>DQ Rule</th><th>Validation Details</th><th class=\"status-col\">Status</th></tr></thead>
         <tbody>
 {rows_html}
         </tbody>
@@ -93,7 +117,7 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
 def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) -> str:
     """Build full HTML report with both layers."""
     layer1 = _build_layer1_html(source_info)
-    layer2 = _build_layer2_html(dq_report)
+    layer2 = _build_layer2_html(dq_report, source_info)
     dsn = _escape_html(source_info.get("data_source_name", "Data Quality Report"))
     is_failed = not dq_report.get("success", False)
     failure_banner = ""
@@ -121,8 +145,9 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
     .summary th {{ width: 140px; }}
     .status-passed {{ color: #0a7; font-weight: 600; }}
     .status-failed {{ color: #c33; font-weight: 600; }}
-    .rules th {{ width: 60px; }}
-    .rules .status-col {{ text-align: center; }}
+    .rules th {{ min-width: 80px; }}
+    .rules .sno-cell {{ text-align: center; width: 40px; }}
+    .rules .status-col {{ text-align: center; width: 60px; }}
     .rules .status-cell {{ text-align: center; vertical-align: middle; }}
     .status-icon {{ font-size: 1.25em; display: inline-block; }}
     .rules .pass {{ background: #f0fff4; }}
