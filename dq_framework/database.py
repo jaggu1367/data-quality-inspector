@@ -21,7 +21,7 @@ class DataQualityRule(Base):
     rule_name = Column(String(255), nullable=False, unique=True, index=True)
     expectation_type = Column(String(255), nullable=False, index=True)
     kwargs = Column(JSON, nullable=False)  # Store kwargs as JSON
-    dataset_name = Column(String(255), nullable=False, index=True)
+    data_source_name = Column(String(255), nullable=False, index=True)
     column_name = Column(String(255), nullable=True)  # Optional column name
     is_active = Column(Boolean, default=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -45,7 +45,7 @@ class ValidationResult(Base):
     success = Column(Boolean, nullable=False, index=True)
     result = Column(JSON, nullable=True)  # Store full GE result as JSON
     exception_info = Column(Text, nullable=True)  # Store exception if validation failed
-    dataset_name = Column(String(255), nullable=False, index=True)
+    data_source_name = Column(String(255), nullable=False, index=True)
     batch_identifier = Column(String(255), nullable=True)  # Identifier for the data batch validated
     
     # Relationship to rule

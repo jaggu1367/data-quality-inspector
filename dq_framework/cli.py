@@ -28,7 +28,7 @@ def create_rule(args):
             rule_name=args.rule_name,
             expectation_type=args.expectation_type,
             kwargs=kwargs,
-            dataset_name=args.dataset_name,
+            data_source_name=args.data_source_name,
             column_name=args.column_name,
             description=args.description
         )
@@ -36,7 +36,7 @@ def create_rule(args):
         print(f"  ID: {rule.id}")
         print(f"  Name: {rule.rule_name}")
         print(f"  Type: {rule.expectation_type}")
-        print(f"  Dataset: {rule.dataset_name}")
+        print(f"  Data source: {rule.data_source_name}")
 
 
 def list_rules(args):
@@ -53,7 +53,7 @@ def list_rules(args):
             status = "Active" if rule.is_active else "Inactive"
             print(f"  [{rule.id}] {rule.rule_name} ({status})")
             print(f"      Type: {rule.expectation_type}")
-            print(f"      Dataset: {rule.dataset_name}")
+            print(f"      Data source: {rule.data_source_name}")
             if rule.column_name:
                 print(f"      Column: {rule.column_name}")
             if rule.description:
@@ -75,12 +75,12 @@ def validate_file(args):
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
-            dataset_name=args.dataset_name,
+            data_source_name=args.data_source_name,
             batch_identifier=args.batch_id,
             save_results=args.save_results
         )
         
-        print(f"\nValidation Results for dataset: {result['dataset_name']}")
+        print(f"\nValidation Results for data source: {result['data_source_name']}")
         print(f"  Total Rules: {result['summary']['total_rules']}")
         print(f"  Passed: {result['summary']['passed']}")
         print(f"  Failed: {result['summary']['failed']}")
@@ -108,7 +108,7 @@ def main():
     create_parser.add_argument('--rule-name', required=True, help='Rule name')
     create_parser.add_argument('--expectation-type', required=True, help='Great Expectations expectation type')
     create_parser.add_argument('--kwargs', required=True, help='JSON string of kwargs')
-    create_parser.add_argument('--dataset-name', required=True, help='Dataset name')
+    create_parser.add_argument('--data-source-name', required=True, help='Data source name')
     create_parser.add_argument('--column-name', help='Column name (if applicable)')
     create_parser.add_argument('--description', help='Rule description')
     create_parser.set_defaults(func=create_rule)
@@ -121,7 +121,7 @@ def main():
     # Validate command
     validate_parser = subparsers.add_parser('validate', help='Validate a CSV file')
     validate_parser.add_argument('--file', required=True, help='Path to CSV file')
-    validate_parser.add_argument('--dataset-name', required=True, help='Dataset name')
+    validate_parser.add_argument('--data-source-name', required=True, help='Data source name')
     validate_parser.add_argument('--batch-id', help='Batch identifier')
     validate_parser.add_argument('--save-results', action='store_true', help='Save results to database')
     validate_parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')

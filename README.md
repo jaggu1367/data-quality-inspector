@@ -91,7 +91,7 @@ From the project root:
 | Load CSV into SQLite (`data_store.db`) | `python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers` |
 | Run rules from CSV source | `python scripts/run_expectations.py --data-source-name customers_csv --save-results` |
 | Run rules from SQLite source | `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results` |
-| Run rules on CSV file (legacy) | `python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results --verbose` |
+| Run rules on data source | `python scripts/run_expectations.py --data-source-name customers_csv --save-results --verbose` |
 
 Make sure you’ve run `python db_init.py` at least once (or the example scripts will create the tables when you run them).
 
@@ -107,25 +107,28 @@ Edit `config/data_sources.json` to declare your sources:
 
 ```json
 {
-  "sources": {
-    "customers_csv": {
+  "sources": [
+    {
+      "data_source_name": "customers_csv",
       "type": "csv",
       "path": "data/sample_customers_100.csv",
-      "dataset_name": "customers"
+      "rules_table": "customers"
     },
-    "customers_sqlite": {
+    {
+      "data_source_name": "customers_sqlite",
       "type": "sqlite",
       "database": "data_store.db",
       "table": "customers",
-      "dataset_name": "customers"
+      "rules_table": "customers"
     }
-  }
+  ]
 }
 ```
 
 Each source has:
+- **`data_source_name`**: unique identifier for the source (e.g. customers_csv, customers_sqlite)
 - **`type`**: `"csv"` or `"sqlite"`
-- **`dataset_name`**: used to match rules (e.g. rules for `dataset_name: "customers"`)
+- **`rules_table`**: used to match rules (e.g. rules for `rules_table: "customers"` → `rules/customers.json`)
 - **CSV**: `path` — path to the CSV file (relative to project root)
 - **SQLite**: `database` and `table` — database file and table name
 
@@ -166,14 +169,14 @@ with RuleManager() as rm:
         rule_name="customer_id_not_null",
         expectation_type="expect_column_values_to_not_be_null",
         kwargs={"column": "customer_id"},
-        dataset_name="customers",
+        data_source_name="customers",
         description="Ensure customer_id has no null values"
     )
     rm.create_rule(
         rule_name="status_valid",
         expectation_type="expect_column_values_to_be_in_set",
         kwargs={"column": "status", "value_set": ["active", "inactive", "pending"]},
-        dataset_name="customers",
+        data_source_name="customers",
         description="Validate status values"
     )
 ```
@@ -189,7 +192,7 @@ df = pd.read_csv("data.csv")  # or build a DataFrame
 with DataQualityValidator() as validator:
     result = validator.validate_dataset(
         df=df,
-        dataset_name="customers",
+        data_source_name="customers",
         batch_identifier="batch_001",
         save_results=True
     )
@@ -236,7 +239,7 @@ python -m dq_framework.cli create-rule \
     --rule-name "email_not_null" \
     --expectation-type "expect_column_values_to_not_be_null" \
     --kwargs '{"column": "email"}' \
-    --dataset-name "users" \
+    --data-source-name "users" \
     --description "Email must not be null"
 ```
 
@@ -252,7 +255,7 @@ python -m dq_framework.cli list-rules --active-only
 ```bash
 python -m dq_framework.cli validate \
     --file data.csv \
-    --dataset-name "customers" \
+    --data-source-name "customers" \
     --batch-id "batch_001" \
     --save-results \
     --verbose
@@ -267,8 +270,6 @@ Use `run_expectations.py` with `--data-source-name` to validate from CSV or SQLi
 python scripts/run_expectations.py --data-source-name customers_csv --save-results
 python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose
 
-# Legacy: direct CSV file path
-python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results
 ```
 
 ### Load CSV into SQLite
@@ -321,7 +322,7 @@ You can open `dq_framework.db` with [DB Browser for SQLite](https://sqlitebrowse
 
 ```sql
 -- Active rules for a dataset
-SELECT * FROM data_quality_rules WHERE dataset_name = 'customers' AND is_active = 1;
+SELECT * FROM data_quality_rules WHERE data_source_name = 'customers' AND is_active = 1;
 
 -- Recent validation results
 SELECT rule_id, success, validation_timestamp FROM validation_results ORDER BY validation_timestamp DESC LIMIT 10;
@@ -350,8 +351,8 @@ Detailed column descriptions, relationships, and example queries are in [DATABAS
 from dq_framework.rule_manager import RuleManager
 
 with RuleManager() as rm:
-    rule = rm.create_rule(rule_name="...", expectation_type="...", kwargs={...}, dataset_name="...")
-    rules = rm.get_rules_by_dataset("customers")
+    rule = rm.create_rule(rule_name="...", expectation_type="...", kwargs={...}, data_source_name="...")
+    rules = rm.get_rules_by_data_source("customers")
     rule = rm.get_rule_by_name("rule_name")
     rm.update_rule(rule_id, kwargs={...})
     rm.deactivate_rule(rule_id)
@@ -364,9 +365,9 @@ with RuleManager() as rm:
 from dq_framework.validator import DataQualityValidator
 
 with DataQualityValidator() as validator:
-    result = validator.validate_dataset(df, dataset_name="customers")
-    result = validator.validate_rule(df, rule_id=1)
-    history = validator.get_validation_history(dataset_name="customers")
+    result = validator.validate_dataset(df=df, data_source_name="customers")
+    result = validator.validate_rule(df=df, rule_id=1)
+    history = validator.get_validation_history(data_source_name="customers")
 ```
 
 ---
@@ -673,7 +674,7 @@ with RuleManager() as rm:
         rule_name="email_format",
         expectation_type="expect_column_values_to_match_regex",
         kwargs={"column": "email", "regex": "^[^@]+@[^@]+\\.[^@]+$"},
-        dataset_name="users",
+        data_source_name="users",
         description="Email must match basic email pattern"
     )
 ```
@@ -685,11 +686,11 @@ python -m dq_framework.cli create-rule \
     --rule-name "email_format" \
     --expectation-type "expect_column_values_to_match_regex" \
     --kwargs '{"column": "email", "regex": "^[^@]+@[^@]+\\.[^@]+$"}' \
-    --dataset-name "users" \
+    --data-source-name "users" \
     --description "Email must match basic email pattern"
 ```
 
-**From JSON (e.g. for seeding):** Each rule object should have `rule_name`, `expectation_type`, `kwargs`, `dataset_name`, and optionally `column_name` and `description`. See `rules/customers.json` for examples of every type above.
+**From JSON (e.g. for seeding):** Each rule object should have `rule_name`, `expectation_type`, `kwargs`, `data_source_name`, and optionally `column_name` and `description`. See `rules/customers.json` for examples of every type above.
 
 For more details on Great Expectations behavior (e.g. `mostly`, `strict_min`, `strict_max`), see [Great Expectations Documentation](https://docs.greatexpectations.io/).
 

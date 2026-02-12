@@ -1,16 +1,16 @@
 [
   {
-    "rule_name": "col_exist_customer_id",
+    "rule_name": "products_col_exist_customer_id",
     "expectation_type": "expect_column_to_exist",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "Column customer_id exists"
   },
   {
-    "rule_name": "type_list_customer_id_int",
+    "rule_name": "products_type_list_customer_id_int",
     "expectation_type": "expect_column_values_to_be_in_type_list",
     "kwargs": {
       "column": "customer_id",
@@ -20,63 +20,63 @@
         "integer"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "customer_id is integer type"
   },
   {
-    "rule_name": "of_type_status_str",
+    "rule_name": "products_of_type_status_str",
     "expectation_type": "expect_column_values_to_be_of_type",
     "kwargs": {
       "column": "status",
       "type_": "str"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status is string"
   },
   {
-    "rule_name": "not_null_customer_id",
+    "rule_name": "products_not_null_customer_id",
     "expectation_type": "expect_column_values_to_not_be_null",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "customer_id not null"
   },
   {
-    "rule_name": "be_null_optional_field_1",
+    "rule_name": "products_be_null_optional_field_1",
     "expectation_type": "expect_column_values_to_be_null",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "Expect nulls in customer_id (demo)"
   },
   {
-    "rule_name": "unique_customer_id",
+    "rule_name": "products_unique_customer_id",
     "expectation_type": "expect_column_values_to_be_unique",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "customer_id unique"
   },
   {
-    "rule_name": "unique_across_customer_id",
+    "rule_name": "products_unique_across_customer_id",
     "expectation_type": "expect_column_values_to_be_unique_across_table",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "customer_id unique across table"
   },
   {
-    "rule_name": "in_set_status",
+    "rule_name": "products_in_set_status",
     "expectation_type": "expect_column_values_to_be_in_set",
     "kwargs": {
       "column": "status",
@@ -86,12 +86,12 @@
         "pending"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status in valid set"
   },
   {
-    "rule_name": "not_in_set_status_bad",
+    "rule_name": "products_not_in_set_status_bad",
     "expectation_type": "expect_column_values_to_not_be_in_set",
     "kwargs": {
       "column": "status",
@@ -101,96 +101,96 @@
         "deleted"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status not in invalid set"
   },
   {
-    "rule_name": "between_age",
+    "rule_name": "products_between_age",
     "expectation_type": "expect_column_values_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 0,
       "max_value": 120
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age between 0 and 120"
   },
   {
-    "rule_name": "numeric_range_age",
+    "rule_name": "products_numeric_range_age",
     "expectation_type": "expect_column_values_to_be_in_numeric_range",
     "kwargs": {
       "column": "age",
       "min_value": 18,
       "max_value": 100
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age in numeric range"
   },
   {
-    "rule_name": "min_between_age",
+    "rule_name": "products_min_between_age",
     "expectation_type": "expect_column_min_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 0,
       "max_value": 50
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age min between 0 and 50"
   },
   {
-    "rule_name": "max_between_age",
+    "rule_name": "products_max_between_age",
     "expectation_type": "expect_column_max_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 50,
       "max_value": 120
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age max between 50 and 120"
   },
   {
-    "rule_name": "mean_between_age",
+    "rule_name": "products_mean_between_age",
     "expectation_type": "expect_column_mean_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 30,
       "max_value": 60
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age mean between 30 and 60"
   },
   {
-    "rule_name": "median_between_age",
+    "rule_name": "products_median_between_age",
     "expectation_type": "expect_column_median_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 30,
       "max_value": 60
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age median between 30 and 60"
   },
   {
-    "rule_name": "stdev_between_age",
+    "rule_name": "products_stdev_between_age",
     "expectation_type": "expect_column_stdev_to_be_between",
     "kwargs": {
       "column": "age",
       "min_value": 10,
       "max_value": 30
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age stdev between 10 and 30"
   },
   {
-    "rule_name": "quantile_age",
+    "rule_name": "products_quantile_age",
     "expectation_type": "expect_column_quantile_values_to_be_between",
     "kwargs": {
       "column": "age",
@@ -216,34 +216,34 @@
         ]
       }
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "age",
     "description": "age quantiles in ranges"
   },
   {
-    "rule_name": "regex_email",
+    "rule_name": "products_regex_email",
     "expectation_type": "expect_column_values_to_match_regex",
     "kwargs": {
       "column": "email",
       "regex": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "email matches regex"
   },
   {
-    "rule_name": "not_regex_status_no_digit",
+    "rule_name": "products_not_regex_status_no_digit",
     "expectation_type": "expect_column_values_to_not_match_regex",
     "kwargs": {
       "column": "status",
       "regex": "\\d"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status has no digits"
   },
   {
-    "rule_name": "regex_list_status",
+    "rule_name": "products_regex_list_status",
     "expectation_type": "expect_column_values_to_match_regex_list",
     "kwargs": {
       "column": "status",
@@ -253,12 +253,12 @@
         "^pending$"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status matches one of regex list"
   },
   {
-    "rule_name": "not_regex_list_status",
+    "rule_name": "products_not_regex_list_status",
     "expectation_type": "expect_column_values_to_not_match_regex_list",
     "kwargs": {
       "column": "status",
@@ -268,146 +268,146 @@
         "expired"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status not in invalid regex list"
   },
   {
-    "rule_name": "like_email",
+    "rule_name": "products_like_email",
     "expectation_type": "expect_column_values_to_match_like_pattern",
     "kwargs": {
       "column": "email",
       "like_pattern": "%@%.%"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "email matches like pattern"
   },
   {
-    "rule_name": "not_like_email_spam",
+    "rule_name": "products_not_like_email_spam",
     "expectation_type": "expect_column_values_to_not_match_like_pattern",
     "kwargs": {
       "column": "email",
       "like_pattern": "%spam%"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "email does not contain spam"
   },
   {
-    "rule_name": "strftime_demo_1",
+    "rule_name": "products_strftime_demo_1",
     "expectation_type": "expect_column_values_to_match_strftime_format",
     "kwargs": {
       "column": "status",
       "strftime_format": "%Y-%m-%d"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "Strftime demo (may fail on non-date column)"
   },
   {
-    "rule_name": "dateutil_email_demo",
+    "rule_name": "products_dateutil_email_demo",
     "expectation_type": "expect_column_values_to_be_dateutil_parseable",
     "kwargs": {
       "column": "email"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "Dateutil demo (may fail on non-date)"
   },
   {
-    "rule_name": "json_email_demo",
+    "rule_name": "products_json_email_demo",
     "expectation_type": "expect_column_values_to_be_json_parseable",
     "kwargs": {
       "column": "email"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "JSON parseable demo (may fail)"
   },
   {
-    "rule_name": "length_between_email",
+    "rule_name": "products_length_between_email",
     "expectation_type": "expect_column_value_lengths_to_be_between",
     "kwargs": {
       "column": "email",
       "min_value": 10,
       "max_value": 50
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "email",
     "description": "email length between 10 and 50"
   },
   {
-    "rule_name": "length_equal_status_6",
+    "rule_name": "products_length_equal_status_6",
     "expectation_type": "expect_column_value_lengths_to_equal",
     "kwargs": {
       "column": "status",
       "value": 6
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "status",
     "description": "status length equals 6 (inactive)"
   },
   {
-    "rule_name": "increasing_customer_id",
+    "rule_name": "products_increasing_customer_id",
     "expectation_type": "expect_column_values_to_be_increasing",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "customer_id is increasing"
   },
   {
-    "rule_name": "decreasing_demo_1",
+    "rule_name": "products_decreasing_demo_1",
     "expectation_type": "expect_column_values_to_be_decreasing",
     "kwargs": {
       "column": "customer_id"
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "column_name": "customer_id",
     "description": "Decreasing demo (will fail)"
   },
   {
-    "rule_name": "table_row_count_between",
+    "rule_name": "products_table_row_count_between",
     "expectation_type": "expect_table_row_count_to_be_between",
     "kwargs": {
       "min_value": 1,
       "max_value": 1000000
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Table has 1 to 1M rows"
   },
   {
-    "rule_name": "table_row_count_equal_100",
+    "rule_name": "products_table_row_count_equal_100",
     "expectation_type": "expect_table_row_count_to_equal",
     "kwargs": {
       "value": 100
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Table has exactly 100 rows"
   },
   {
-    "rule_name": "table_col_count_between",
+    "rule_name": "products_table_col_count_between",
     "expectation_type": "expect_table_column_count_to_be_between",
     "kwargs": {
       "min_value": 1,
       "max_value": 20
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Table has 1 to 20 columns"
   },
   {
-    "rule_name": "table_col_count_equal_4",
+    "rule_name": "products_table_col_count_equal_4",
     "expectation_type": "expect_table_column_count_to_equal",
     "kwargs": {
       "value": 4
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Table has exactly 4 columns"
   },
   {
-    "rule_name": "table_cols_ordered",
+    "rule_name": "products_table_cols_ordered",
     "expectation_type": "expect_table_columns_to_match_ordered_list",
     "kwargs": {
       "column_list": [
@@ -417,11 +417,11 @@
         "age"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Columns match ordered list"
   },
   {
-    "rule_name": "table_cols_set",
+    "rule_name": "products_table_cols_set",
     "expectation_type": "expect_table_columns_to_match_set",
     "kwargs": {
       "column_set": [
@@ -431,11 +431,11 @@
         "age"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "Columns match set"
   },
   {
-    "rule_name": "compound_unique_cust_email",
+    "rule_name": "products_compound_unique_cust_email",
     "expectation_type": "expect_compound_columns_to_be_unique",
     "kwargs": {
       "column_list": [
@@ -443,7 +443,7 @@
         "email"
       ]
     },
-    "data_source_name": "customers",
+    "data_source_name": "products",
     "description": "customer_id+email compound unique"
   }
 ]

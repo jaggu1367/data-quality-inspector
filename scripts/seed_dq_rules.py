@@ -1,7 +1,7 @@
 """
-Seed data_quality_rules by reading rules from JSON files per dataset.
-Rules are stored in rules/{dataset_name}.json files and are marked as active.
-Run with: python scripts/seed_comprehensive_rules.py
+Seed data_quality_rules by reading rules from JSON files in the rules folder.
+Loads rules from rules/{dataset_name}.json and seeds them into the database.
+Run with: python scripts/seed_dq_rules.py
 """
 import sys
 import os
@@ -14,10 +14,33 @@ if _root not in sys.path:
 
 from dq_framework.database import db_manager, DataQualityRule
 
+DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
 
-def load_rules_from_json(rules_dir: str) -> dict:
+
+def get_dataset_names_from_sources(config_path: str) -> set[str] | None:
+    """Extract unique rules_table names (for rules files). Uses rules_table if present, else data_source_name."""
+    path = config_path if os.path.isabs(config_path) else os.path.join(_root, config_path)
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        config = json.load(f)
+    sources = config.get("sources", [])
+    if isinstance(sources, dict):
+        sources = list(sources.values())
+    result = set()
+    for s in sources:
+        if not isinstance(s, dict):
+            continue
+        name = s.get("rules_table") or s.get("data_source_name")
+        if name:
+            result.add(name)
+    return result or None
+
+
+def load_rules_from_json(rules_dir: str, dataset_names_filter: set[str] | None = None) -> dict:
     """
     Load rules from JSON files in the rules directory.
+    If dataset_names_filter is set, only load rules for those dataset_names.
     Returns a dictionary mapping dataset_name to list of rules.
     """
     rules_by_dataset = {}
@@ -32,6 +55,8 @@ def load_rules_from_json(rules_dir: str) -> dict:
     
     for json_file in json_files:
         dataset_name = os.path.splitext(os.path.basename(json_file))[0]
+        if dataset_names_filter is not None and dataset_name not in dataset_names_filter:
+            continue
         try:
             with open(json_file, 'r', encoding='utf-8') as f:
                 rules = json.load(f)
@@ -48,30 +73,37 @@ def load_rules_from_json(rules_dir: str) -> dict:
     return rules_by_dataset
 
 
-def get_all_rules(rules_dir: str = "rules") -> list:
+def get_all_rules(rules_dir: str = "rules", dataset_names_filter: set[str] | None = None) -> list:
     """
     Load all rules from JSON files and return as a flat list.
+    If dataset_names_filter is set, only load rules for those dataset_names.
     """
-    rules_by_dataset = load_rules_from_json(rules_dir)
+    rules_by_dataset = load_rules_from_json(rules_dir, dataset_names_filter)
     all_rules = []
     
     for dataset_name, rules in rules_by_dataset.items():
         for rule in rules:
-            # Ensure dataset_name is set (use filename if not in JSON)
-            if "dataset_name" not in rule:
-                rule["dataset_name"] = dataset_name
+            # Ensure data_source_name is set (use filename if not in JSON)
+            if "data_source_name" not in rule:
+                rule["data_source_name"] = dataset_name
             all_rules.append(rule)
     
     return all_rules
 
 
-def seed_comprehensive_rules(replace_existing: bool = True, rules_dir: str = "rules"):
+def seed_dq_rules(
+    replace_existing: bool = True,
+    rules_dir: str = "rules",
+    sources_config: str = DEFAULT_SOURCES_CONFIG,
+    use_sources_filter: bool = True,
+):
     """
-    Seed rules from JSON files. If replace_existing, clears all first. 
+    Seed rules from JSON files. If replace_existing, clears all first.
     Otherwise upserts: update if same rule_name+dataset exists.
     """
-    # Load rules from JSON files
-    all_rules = get_all_rules(rules_dir)
+    # Load rules (only for dataset_names in data_sources when use_sources_filter)
+    dataset_names = get_dataset_names_from_sources(sources_config) if use_sources_filter else None
+    all_rules = get_all_rules(rules_dir, dataset_names)
     
     if not all_rules:
         print("  No rules found in JSON files. Nothing to seed.")
@@ -89,7 +121,7 @@ def seed_comprehensive_rules(replace_existing: bool = True, rules_dir: str = "ru
         for r in all_rules:
             existing = session.query(DataQualityRule).filter(
                 DataQualityRule.rule_name == r["rule_name"],
-                DataQualityRule.dataset_name == r["dataset_name"],
+                DataQualityRule.data_source_name == r["data_source_name"],
             ).first()
             if existing:
                 existing.expectation_type = r["expectation_type"]
@@ -103,7 +135,7 @@ def seed_comprehensive_rules(replace_existing: bool = True, rules_dir: str = "ru
                     rule_name=r["rule_name"],
                     expectation_type=r["expectation_type"],
                     kwargs=r["kwargs"],
-                    dataset_name=r["dataset_name"],
+                    data_source_name=r["data_source_name"],
                     column_name=r.get("column_name"),
                     description=r.get("description"),
                     is_active=True,
@@ -120,7 +152,7 @@ def seed_comprehensive_rules(replace_existing: bool = True, rules_dir: str = "ru
 def main():
     print("Seeding data quality rules from JSON files...")
     db_manager.create_tables()
-    seed_comprehensive_rules(replace_existing=True)
+    seed_dq_rules(replace_existing=True)
     print("Done. Run: python scripts/run_expectations.py --save-results")
 
 

@@ -37,7 +37,7 @@ class ValidationResultRepository:
         self,
         rule_id: int,
         success: bool,
-        dataset_name: str,
+        data_source_name: str,
         result: Optional[Dict[str, Any]] = None,
         exception_info: Optional[str] = None,
         batch_identifier: Optional[str] = None,
@@ -51,7 +51,7 @@ class ValidationResultRepository:
             success=success,
             result=sanitized_result,
             exception_info=exception_info,
-            dataset_name=dataset_name,
+            data_source_name=data_source_name,
             batch_identifier=batch_identifier,
         )
         self._session.add(vr)
@@ -63,7 +63,7 @@ class ValidationResultRepository:
         self,
         results_by_rule_name: Dict[str, Any],
         rules: List[DataQualityRule],
-        dataset_name: str,
+        data_source_name: str,
         batch_identifier: Optional[str] = None,
     ) -> None:
         """Persist validation results for multiple rules."""
@@ -72,7 +72,7 @@ class ValidationResultRepository:
             self.add(
                 rule_id=rule.id,
                 success=result.get("success", False),
-                dataset_name=dataset_name,
+                data_source_name=data_source_name,
                 result=result.get("result"),
                 exception_info=result.get("exception_info"),
                 batch_identifier=batch_identifier,
@@ -81,13 +81,13 @@ class ValidationResultRepository:
     def find_history(
         self,
         rule_id: Optional[int] = None,
-        dataset_name: Optional[str] = None,
+        data_source_name: Optional[str] = None,
         limit: int = 100,
     ) -> List[ValidationResult]:
-        """Get validation history, optionally filtered by rule or dataset."""
+        """Get validation history, optionally filtered by rule or data source."""
         query = self._session.query(ValidationResult)
         if rule_id is not None:
             query = query.filter(ValidationResult.rule_id == rule_id)
-        if dataset_name is not None:
-            query = query.filter(ValidationResult.dataset_name == dataset_name)
+        if data_source_name is not None:
+            query = query.filter(ValidationResult.data_source_name == data_source_name)
         return query.order_by(ValidationResult.validation_timestamp.desc()).limit(limit).all()

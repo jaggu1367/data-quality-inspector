@@ -11,7 +11,7 @@ saved to validation_results.
 Usage (from project root):
   python scripts/run_expectations.py --data-source-name customers_csv --save-results
   python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
-  python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results
+  python scripts/run_expectations.py --data-source-name orders_csv
 """
 import json
 import sys
@@ -28,8 +28,6 @@ from dq_framework.database import db_manager
 from dq_framework.validator import DataQualityValidator
 from db_init import seed_data_quality_rules_if_empty
 
-DEFAULT_CSV = "data/sample_customers_100.csv"
-DEFAULT_DATASET = "customers"
 DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
 
 
@@ -44,10 +42,11 @@ def load_sources_config(config_path: str) -> dict:
 
 def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFrame, str]:
     """
-    Load data from a source (csv or sqlite). Returns (DataFrame, dataset_name).
+    Load data from a source (csv or sqlite). Returns (DataFrame, rules_table).
+    rules_table: used for rule matching; uses rules_table if present, else data_source_name.
     """
     source_type = source_config.get("type", "csv").lower()
-    dataset_name = source_config.get("dataset_name", "dataset")
+    rules_table = source_config.get("rules_table") or source_config.get("data_source_name", "dataset")
 
     if source_type == "csv":
         path = source_config.get("path")
@@ -57,7 +56,7 @@ def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFr
         if not os.path.isfile(full_path):
             raise FileNotFoundError(f"CSV file not found: {full_path}")
         df = pd.read_csv(full_path)
-        return df, dataset_name
+        return df, rules_table
 
     if source_type == "sqlite":
         database = source_config.get("database")
@@ -68,7 +67,7 @@ def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFr
         conn_str = f"sqlite:///{os.path.normpath(db_path).replace(os.sep, '/')}"
         engine = create_engine(conn_str)
         df = pd.read_sql_table(table, engine)
-        return df, dataset_name
+        return df, rules_table
 
     raise ValueError(f"Unknown source type: {source_type}. Expected 'csv' or 'sqlite'.")
 
@@ -80,7 +79,7 @@ def main():
     parser.add_argument(
         "--data-source-name",
         "-s",
-        default=None,
+        required=True,
         help="Name of the data source from config/data_sources.json (e.g. customers_csv, customers_sqlite)",
     )
     parser.add_argument(
@@ -88,9 +87,8 @@ def main():
         default=DEFAULT_SOURCES_CONFIG,
         help=f"Path to data sources config (default: {DEFAULT_SOURCES_CONFIG})",
     )
-    parser.add_argument("--file", default=DEFAULT_CSV, help=f"Path to CSV (legacy; used when --data-source-name not set; default: {DEFAULT_CSV})")
-    parser.add_argument("--dataset-name", default=DEFAULT_DATASET, help=f"Dataset name for rules (default: {DEFAULT_DATASET})")
-    parser.add_argument("--comprehensive", action="store_true", help="Seed 2+ rules per expectation type before running")
+    parser.add_argument("--dataset-name", default=None, help="Override rules_table from config (optional)")
+    parser.add_argument("--seed-dq-rules", action="store_true", help="Run seed_dq_rules.py to load all rules from JSON before validation")
     parser.add_argument("--batch-id", default=None, help="Optional batch identifier for validation_results")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
@@ -102,48 +100,38 @@ def main():
 
     print("\n1. Initializing database...")
     db_manager.create_tables()
-    if args.comprehensive:
+    if args.seed_dq_rules:
         import subprocess
-        subprocess.run([sys.executable, os.path.join(_root, "scripts", "seed_comprehensive_rules.py")], check=True, cwd=_root)
+        subprocess.run([sys.executable, os.path.join(_root, "scripts", "seed_dq_rules.py")], check=True, cwd=_root)
     else:
         seed_data_quality_rules_if_empty()
     print("   Database ready.")
 
-    # Load data: either from config (--data-source-name) or legacy CSV (--file)
-    if args.data_source_name:
-        config = load_sources_config(args.sources_config)
-        sources = config.get("sources", {})
-        if args.data_source_name not in sources:
-            print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources.keys())}")
-            sys.exit(1)
-        source_config = sources[args.data_source_name]
-        source_type = source_config.get("type", "csv")
-        print(f"\n2. Loading from source '{args.data_source_name}' ({source_type})...")
-        try:
-            df, dataset_name = load_data_from_source(source_config, _root)
-            if args.dataset_name != DEFAULT_DATASET:
-                dataset_name = args.dataset_name  # Override with CLI if provided
-        except (FileNotFoundError, ValueError) as e:
-            print(f"\nError: {e}")
-            sys.exit(1)
-    else:
-        csv_path = args.file
-        if not os.path.isabs(csv_path):
-            csv_path = os.path.join(_root, csv_path)
-        if not os.path.isfile(csv_path):
-            print(f"\nError: CSV not found: {csv_path}")
-            sys.exit(1)
-        print(f"\n2. Loading CSV: {csv_path}")
-        df = pd.read_csv(csv_path)
-        dataset_name = args.dataset_name
+    # Load data from config (--data-source-name is required)
+    config = load_sources_config(args.sources_config)
+    sources_list = config.get("sources", [])
+    sources_by_name = {s["data_source_name"]: s for s in sources_list if isinstance(s, dict) and "data_source_name" in s}
+    if args.data_source_name not in sources_by_name:
+        print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources_by_name.keys())}")
+        sys.exit(1)
+    source_config = sources_by_name[args.data_source_name]
+    source_type = source_config.get("type", "csv")
+    print(f"\n2. Loading from source '{args.data_source_name}' ({source_type})...")
+    try:
+        df, data_source_name = load_data_from_source(source_config, _root)
+        if args.dataset_name:
+            data_source_name = args.dataset_name  # Override rules_table with CLI if provided
+    except (FileNotFoundError, ValueError) as e:
+        print(f"\nError: {e}")
+        sys.exit(1)
 
     print(f"   Rows: {len(df)}, Columns: {list(df.columns)}")
 
-    print(f"\n3. Running all active rules for dataset '{dataset_name}'...")
+    print(f"\n3. Running all active rules for data source '{data_source_name}'...")
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
-            dataset_name=dataset_name,
+            data_source_name=data_source_name,
             batch_identifier=args.batch_id,
             save_results=args.save_results,
         )

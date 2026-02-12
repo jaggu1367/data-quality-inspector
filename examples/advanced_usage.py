@@ -17,7 +17,7 @@ def example_regex_validation():
             rule_name="email_format_check",
             expectation_type="expect_column_values_to_match_regex",
             kwargs={"column": "email", "regex": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"},
-            dataset_name="users",
+            data_source_name="users",
             description="Validate email format using regex"
         )
         
@@ -26,7 +26,7 @@ def example_regex_validation():
             rule_name="phone_format_check",
             expectation_type="expect_column_values_to_match_regex",
             kwargs={"column": "phone", "regex": r"^\(\d{3}\) \d{3}-\d{4}$"},
-            dataset_name="users",
+            data_source_name="users",
             description="Validate phone number format"
         )
     
@@ -38,7 +38,7 @@ def example_regex_validation():
     df = pd.DataFrame(data)
     
     with DataQualityValidator() as validator:
-        result = validator.validate_dataset(df, dataset_name="users")
+        result = validator.validate_dataset(df=df, data_source_name="users")
         print(f"\nRegex validation results: {'PASSED' if result['success'] else 'FAILED'}")
 
 
@@ -52,7 +52,7 @@ def example_statistical_validation():
             rule_name="salary_mean_check",
             expectation_type="expect_column_mean_to_be_between",
             kwargs={"column": "salary", "min_value": 50000, "max_value": 100000},
-            dataset_name="employees",
+            data_source_name="employees",
             description="Ensure average salary is between 50k and 100k"
         )
         
@@ -61,7 +61,7 @@ def example_statistical_validation():
             rule_name="salary_stdev_check",
             expectation_type="expect_column_stdev_to_be_between",
             kwargs={"column": "salary", "min_value": 10000, "max_value": 30000},
-            dataset_name="employees",
+            data_source_name="employees",
             description="Ensure salary standard deviation is reasonable"
         )
     
@@ -74,7 +74,7 @@ def example_statistical_validation():
     df = pd.DataFrame(data)
     
     with DataQualityValidator() as validator:
-        result = validator.validate_dataset(df, dataset_name="employees")
+        result = validator.validate_dataset(df=df, data_source_name="employees")
         print(f"Statistical validation results: {'PASSED' if result['success'] else 'FAILED'}")
 
 
@@ -88,7 +88,7 @@ def example_table_level_validation():
             rule_name="required_columns_check",
             expectation_type="expect_table_column_count_to_equal",
             kwargs={"value": 4},
-            dataset_name="orders",
+            data_source_name="orders",
             description="Ensure table has exactly 4 columns"
         )
         
@@ -97,7 +97,7 @@ def example_table_level_validation():
             rule_name="column_names_check",
             expectation_type="expect_table_columns_to_match_set",
             kwargs={"column_set": ["order_id", "customer_id", "product_id", "quantity"]},
-            dataset_name="orders",
+            data_source_name="orders",
             description="Ensure table has required columns"
         )
     
@@ -111,7 +111,7 @@ def example_table_level_validation():
     df = pd.DataFrame(data)
     
     with DataQualityValidator() as validator:
-        result = validator.validate_dataset(df, dataset_name="orders")
+        result = validator.validate_dataset(df=df, data_source_name="orders")
         print(f"Table-level validation results: {'PASSED' if result['success'] else 'FAILED'}")
 
 
@@ -125,7 +125,7 @@ def example_rule_management():
             rule_name="test_rule",
             expectation_type="expect_column_values_to_not_be_null",
             kwargs={"column": "test_column"},
-            dataset_name="test_dataset",
+            data_source_name="test_dataset",
             description="Test rule"
         )
         print(f"Created rule: {rule.rule_name} (ID: {rule.id})")

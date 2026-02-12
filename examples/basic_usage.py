@@ -24,7 +24,7 @@ def example_create_rules():
     with RuleManager() as rm:
         # Delete existing rules if they exist (for demo purposes)
         try:
-            existing_rules = rm.get_rules_by_dataset("customers", active_only=False)
+            existing_rules = rm.get_rules_by_data_source("customers", active_only=False)
             for rule in existing_rules:
                 rm.delete_rule(rule.id)
         except Exception:
@@ -34,7 +34,7 @@ def example_create_rules():
             rule_name="customer_id_not_null",
             expectation_type="expect_column_values_to_not_be_null",
             kwargs={"column": "customer_id"},
-            dataset_name="customers",
+            data_source_name="customers",
             description="Ensure customer_id column has no null values"
         )
         
@@ -43,7 +43,7 @@ def example_create_rules():
             rule_name="status_valid_values",
             expectation_type="expect_column_values_to_be_in_set",
             kwargs={"column": "status", "value_set": ["active", "inactive", "pending"]},
-            dataset_name="customers",
+            data_source_name="customers",
             description="Ensure status column contains only valid values"
         )
         
@@ -52,7 +52,7 @@ def example_create_rules():
             rule_name="age_range_check",
             expectation_type="expect_column_values_to_be_between",
             kwargs={"column": "age", "min_value": 0, "max_value": 120},
-            dataset_name="customers",
+            data_source_name="customers",
             description="Ensure age is between 0 and 120"
         )
         
@@ -61,7 +61,7 @@ def example_create_rules():
             rule_name="min_row_count",
             expectation_type="expect_table_row_count_to_be_between",
             kwargs={"min_value": 1, "max_value": 1000000},
-            dataset_name="customers",
+            data_source_name="customers",
             description="Ensure table has at least 1 row"
         )
         
@@ -70,7 +70,7 @@ def example_create_rules():
             rule_name="email_unique",
             expectation_type="expect_column_values_to_be_unique",
             kwargs={"column": "email"},
-            dataset_name="customers",
+            data_source_name="customers",
             description="Ensure email addresses are unique"
         )
         
@@ -96,7 +96,7 @@ def example_validate_data():
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
-            dataset_name="customers",
+            data_source_name="customers",
             batch_identifier="batch_001",
             save_results=True
         )
@@ -127,7 +127,7 @@ def example_query_rules():
     
     with RuleManager() as rm:
         # Get all rules for a dataset
-        rules = rm.get_rules_by_dataset("customers")
+        rules = rm.get_rules_by_data_source("customers")
         print(f"Found {len(rules)} rules for 'customers' dataset:")
         for rule in rules:
             print(f"  - {rule.rule_name} ({rule.expectation_type})")
@@ -149,7 +149,7 @@ def example_validation_history():
     
     with DataQualityValidator() as validator:
         history = validator.get_validation_history(
-            dataset_name="customers",
+            data_source_name="customers",
             limit=10
         )
         

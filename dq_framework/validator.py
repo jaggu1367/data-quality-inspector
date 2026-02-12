@@ -37,28 +37,28 @@ class DataQualityValidator:
     def validate_dataset(
         self,
         df: pd.DataFrame,
-        dataset_name: str,
+        data_source_name: str,
         batch_identifier: Optional[str] = None,
         save_results: bool = True,
     ) -> Dict[str, Any]:
         """
-        Validate a dataset against all active rules for that dataset (from data_quality_rules).
+        Validate a dataset against all active rules for that data source (from data_quality_rules).
 
         Args:
             df: pandas DataFrame to validate
-            dataset_name: Name of the dataset (must match rule dataset_name)
+            data_source_name: Name of the data source (must match rule data_source_name)
             batch_identifier: Optional identifier for this batch
             save_results: Whether to save to validation_results table
 
         Returns:
             Dictionary with success, results, and summary (total_rules, passed, failed).
         """
-        rules = self._rule_manager.get_rules_by_dataset(dataset_name, active_only=True)
+        rules = self._rule_manager.get_rules_by_data_source(data_source_name, active_only=True)
 
         if not rules:
             return {
                 "success": True,
-                "message": f"No active rules found for dataset: {dataset_name}",
+                "message": f"No active rules found for data source: {data_source_name}",
                 "results": {},
                 "summary": {"total_rules": 0, "passed": 0, "failed": 0},
             }
@@ -69,7 +69,7 @@ class DataQualityValidator:
             self._result_repo.add_batch(
                 results_by_rule_name=validation_results,
                 rules=rules,
-                dataset_name=dataset_name,
+                data_source_name=data_source_name,
                 batch_identifier=batch_identifier,
             )
             if self._own_session:
@@ -80,7 +80,7 @@ class DataQualityValidator:
 
         return {
             "success": failed == 0,
-            "dataset_name": dataset_name,
+            "data_source_name": data_source_name,
             "batch_identifier": batch_identifier,
             "results": validation_results,
             "summary": {
@@ -111,7 +111,7 @@ class DataQualityValidator:
             self._result_repo.add(
                 rule_id=rule.id,
                 success=result.get("success", False),
-                dataset_name=rule.dataset_name,
+                data_source_name=rule.data_source_name,
                 result=result.get("result"),
                 exception_info=result.get("exception_info"),
                 batch_identifier=batch_identifier,
@@ -130,8 +130,8 @@ class DataQualityValidator:
     def get_validation_history(
         self,
         rule_id: Optional[int] = None,
-        dataset_name: Optional[str] = None,
+        data_source_name: Optional[str] = None,
         limit: int = 100,
     ) -> List[ValidationResult]:
         """Get validation history from validation_results table."""
-        return self._result_repo.find_history(rule_id=rule_id, dataset_name=dataset_name, limit=limit)
+        return self._result_repo.find_history(rule_id=rule_id, data_source_name=data_source_name, limit=limit)
