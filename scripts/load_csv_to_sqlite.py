@@ -20,9 +20,9 @@ if _root not in sys.path:
 
 import pandas as pd
 from sqlalchemy import create_engine
-from dq_framework.config import config
 
 DEFAULT_CSV = "data/sample_customers_100.csv"
+DATA_STORE_DB = "data_store.db"
 
 
 def sanitize_column_name(name: str) -> str:
@@ -50,7 +50,10 @@ def load_csv_to_sqlite(
     encoding: str = "utf-8",
 ) -> int:
     """Load CSV file into SQLite table. Returns number of rows loaded."""
-    engine = create_engine(config.database.connection_string)
+    db_path = DATA_STORE_DB if os.path.isabs(DATA_STORE_DB) else os.path.join(_root, DATA_STORE_DB)
+    # Use forward slashes for SQLAlchemy connection string (Windows compatibility)
+    conn_str = f"sqlite:///{os.path.normpath(db_path).replace(os.sep, '/')}"
+    engine = create_engine(conn_str)
 
     # Read CSV (first row as header by default)
     df = pd.read_csv(
@@ -119,9 +122,7 @@ def main():
 
     table_name = args.table or derive_table_name(csv_path)
 
-    db_path = config.database.database_path
-    if not os.path.isabs(db_path):
-        db_path = os.path.join(_root, db_path)
+    db_path = DATA_STORE_DB if os.path.isabs(DATA_STORE_DB) else os.path.join(_root, DATA_STORE_DB)
 
     print("=" * 60)
     print("Load CSV to SQLite")
