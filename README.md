@@ -91,7 +91,8 @@ From the project root:
 | Load CSV into SQLite (`data_store.db`) | `python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers` |
 | Run rules from CSV source | `python scripts/run_expectations.py --data-source-name customers_csv --save-results` |
 | Run rules from SQLite source | `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results` |
-| Run rules on data source | `python scripts/run_expectations.py --data-source-name customers_csv --save-results --verbose` |
+| Run rules on all sources | `python scripts/run_expectations.py --all --save-results` |
+| Run rules (verbose) | `python scripts/run_expectations.py --data-source-name customers_csv --save-results --verbose` |
 
 Make sure you’ve run `python db_init.py` at least once (or the example scripts will create the tables when you run them).
 
@@ -150,6 +151,9 @@ python scripts/run_expectations.py --data-source-name customers_csv --save-resul
 
 # From SQLite source (config)
 python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
+
+# Run all sources in config
+python scripts/run_expectations.py --all --save-results
 
 # Custom config file
 python scripts/run_expectations.py --data-source-name customers_sqlite --sources-config path/to/sources.json
@@ -263,13 +267,15 @@ python -m dq_framework.cli validate \
 
 ### Run expectations from data sources
 
-Use `run_expectations.py` with `--data-source-name` to validate from CSV or SQLite (as defined in `config/data_sources.json`):
+Use `run_expectations.py` with `--data-source-name` to validate a specific source, or `--all` to run all sources defined in `config/data_sources.json`:
 
 ```bash
-# From CSV or SQLite source (by name)
+# Single source (by name)
 python scripts/run_expectations.py --data-source-name customers_csv --save-results
 python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose
 
+# All sources in config
+python scripts/run_expectations.py --all --save-results
 ```
 
 ### Load CSV into SQLite
@@ -719,7 +725,7 @@ dq-ge-poc/
 ├── scripts/
 │   ├── init_database.py    ← Alternative to db_init.py (tables only)
 │   ├── load_csv_to_sqlite.py  ← Load CSV into data_store.db
-│   └── run_expectations.py   ← Run active rules from data_quality_rules (CSV or SQLite via config)
+│   └── run_expectations.py   ← Run active rules (--data-source-name or --all, CSV/SQLite via config)
 ├── requirements.txt
 ├── setup.py
 ├── .env.example

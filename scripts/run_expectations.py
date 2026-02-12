@@ -12,6 +12,7 @@ Usage (from project root):
   python scripts/run_expectations.py --data-source-name customers_csv --save-results
   python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
   python scripts/run_expectations.py --data-source-name orders_csv
+  python scripts/run_expectations.py --all --save-results   # run all sources from config
 """
 import json
 import sys
@@ -72,6 +73,56 @@ def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFr
     raise ValueError(f"Unknown source type: {source_type}. Expected 'csv' or 'sqlite'.")
 
 
+def _run_one(
+    data_source_name: str,
+    source_config: dict,
+    args: argparse.Namespace,
+    root: str,
+) -> bool:
+    """Run expectations for one source. Returns True if all passed, False otherwise."""
+    source_type = source_config.get("type", "csv")
+    print(f"\n{'='*60}")
+    print(f"Source: {data_source_name} ({source_type})")
+    print("=" * 60)
+    try:
+        df, rules_key = load_data_from_source(source_config, root)
+        if args.dataset_name and not args.all:
+            rules_key = args.dataset_name
+    except (FileNotFoundError, ValueError) as e:
+        print(f"  Error: {e}")
+        return False
+
+    print(f"  Rows: {len(df)}, Columns: {list(df.columns)}")
+    print(f"  Running active rules for '{rules_key}'...")
+
+    batch_id = args.batch_id or (f"{data_source_name}" if args.all else None)
+    with DataQualityValidator() as validator:
+        result = validator.validate_dataset(
+            df=df,
+            data_source_name=rules_key,
+            batch_identifier=batch_id,
+            save_results=args.save_results,
+        )
+
+    total = result["summary"]["total_rules"]
+    passed = result["summary"]["passed"]
+    failed = result["summary"]["failed"]
+
+    print("\n  RESULTS:")
+    print(f"    Overall: {'PASSED' if result['success'] else 'FAILED'}")
+    print(f"    Rules:   {passed}/{total} passed, {failed} failed")
+
+    if args.verbose or failed > 0:
+        for rule_name, rule_result in result["results"].items():
+            ok = rule_result.get("success", False)
+            symbol = "PASS" if ok else "FAIL"
+            print(f"    [{symbol}] {rule_name}")
+            if not ok and rule_result.get("exception_info"):
+                print(f"        Error: {(rule_result['exception_info'] or '')[:150]}")
+
+    return result["success"]
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run active data quality rules from data_quality_rules table against a data source (CSV or SQLite)"
@@ -79,8 +130,13 @@ def main():
     parser.add_argument(
         "--data-source-name",
         "-s",
-        required=True,
         help="Name of the data source from config/data_sources.json (e.g. customers_csv, customers_sqlite)",
+    )
+    parser.add_argument(
+        "--all",
+        "-a",
+        action="store_true",
+        help="Run expectations for all data sources in config",
     )
     parser.add_argument(
         "--sources-config",
@@ -93,6 +149,9 @@ def main():
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
     args = parser.parse_args()
+
+    if not args.all and not args.data_source_name:
+        parser.error("Either --data-source-name or --all is required")
 
     print("=" * 60)
     print("Data Quality: Run active rules from data_quality_rules")
@@ -107,69 +166,33 @@ def main():
         seed_data_quality_rules_if_empty()
     print("   Database ready.")
 
-    # Load data from config (--data-source-name is required)
     config = load_sources_config(args.sources_config)
     sources_list = config.get("sources", [])
     sources_by_name = {s["data_source_name"]: s for s in sources_list if isinstance(s, dict) and "data_source_name" in s}
+
+    if args.all:
+        data_source_names = list(sources_by_name.keys())
+        if not data_source_names:
+            print("\nError: No sources found in config.")
+            sys.exit(1)
+        print(f"\nRunning expectations for {len(data_source_names)} source(s): {data_source_names}")
+        exit_code = 0
+        for dsn in data_source_names:
+            source_config = sources_by_name[dsn]
+            if _run_one(dsn, source_config, args, _root):
+                continue
+            exit_code = 1
+        sys.exit(exit_code)
+
     if args.data_source_name not in sources_by_name:
         print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources_by_name.keys())}")
         sys.exit(1)
-    source_config = sources_by_name[args.data_source_name]
-    source_type = source_config.get("type", "csv")
-    print(f"\n2. Loading from source '{args.data_source_name}' ({source_type})...")
-    try:
-        df, data_source_name = load_data_from_source(source_config, _root)
-        if args.dataset_name:
-            data_source_name = args.dataset_name  # Override rules_table with CLI if provided
-    except (FileNotFoundError, ValueError) as e:
-        print(f"\nError: {e}")
-        sys.exit(1)
 
-    print(f"   Rows: {len(df)}, Columns: {list(df.columns)}")
-
-    print(f"\n3. Running all active rules for data source '{data_source_name}'...")
-    with DataQualityValidator() as validator:
-        result = validator.validate_dataset(
-            df=df,
-            data_source_name=data_source_name,
-            batch_identifier=args.batch_id,
-            save_results=args.save_results,
-        )
-
-    total = result["summary"]["total_rules"]
-    passed = result["summary"]["passed"]
-    failed = result["summary"]["failed"]
-
-    print("\n" + "-" * 60)
-    print("RESULTS")
-    print("-" * 60)
-    print(f"  Overall:        {'PASSED' if result['success'] else 'FAILED'}")
-    print(f"  Total rules:    {total}")
-    print(f"  Passed:         {passed}")
-    print(f"  Failed:         {failed}")
-
-    if args.verbose or failed > 0:
-        print("\n  Per-expectation:")
-        for rule_name, rule_result in result["results"].items():
-            ok = rule_result.get("success", False)
-            symbol = "PASS" if ok else "FAIL"
-            print(f"    [{symbol}] {rule_name}")
-            if not ok:
-                if rule_result.get("exception_info"):
-                    err = rule_result["exception_info"]
-                    print(f"        Error: {(err or '')[:200]}")
-                else:
-                    res = (rule_result.get("result") or {})
-                    if isinstance(res, dict):
-                        inner = res.get("result") or res
-                        if isinstance(inner, dict) and "unexpected_count" in inner:
-                            print(f"        Unexpected count: {inner['unexpected_count']}")
-
+    success = _run_one(args.data_source_name, sources_by_name[args.data_source_name], args, _root)
     if args.save_results:
         print("\n  Validation results saved to validation_results table.")
-
     print("\n" + "=" * 60)
-    sys.exit(0 if result["success"] else 1)
+    sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":
