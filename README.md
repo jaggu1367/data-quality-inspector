@@ -10,6 +10,7 @@ Check your data against rules—no database server needed. Uses Great Expectatio
 - [Get started (3 steps)](#get-started-3-steps)
 - [Common commands](#common-commands)
 - [Validate your data](#validate-your-data)
+  - [Full options example](#full-options-example)
 - [Data sources config](#data-sources-config)
 - [Use from Python](#use-from-python)
 - [Expectation types reference](#expectation-types-reference)
@@ -57,6 +58,14 @@ python scripts/seed_dq_rules.py
 python scripts/run_expectations.py --data-source-name customers_csv --save-results
 ```
 
+Or use the SQLite source (after loading CSV data):
+
+```bash
+python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers
+python scripts/seed_dq_rules.py
+python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
+```
+
 This loads rules from `rules/customers.json` and runs them on the sample data. You'll see pass/fail results for each rule.
 
 ---
@@ -67,11 +76,12 @@ This loads rules from `rules/customers.json` and runs them on the sample data. Y
 |---------|--------------|
 | `python db_init.py` | Create the database (run once) |
 | `python scripts/seed_dq_rules.py` | Load rules from `rules/*.json` into the database |
-| `python scripts/run_expectations.py --data-source-name customers_csv --save-results` | Check one data source |
+| `python scripts/run_expectations.py --data-source-name customers_csv --save-results` | Check CSV data source |
+| `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results` | Check SQLite data source |
 | `python scripts/run_expectations.py --all --save-results` | Check all data sources |
-| `python scripts/run_expectations.py --data-source-name customers_csv --seed-dq-rules` | Load rules for this source, then validate |
+| `python scripts/run_expectations.py --data-source-name customers_sqlite --seed-dq-rules --save-results` | Load rules, then validate SQLite source |
 | `python scripts/run_expectations.py --data-source-name customers_csv --send-report` | Run validation and generate reports (email and/or HTML per config) |
-| `python scripts/seed_dq_rules.py --data-source-name customers_csv` | Load only customers rules (keeps others) |
+| `python scripts/seed_dq_rules.py --data-source-name customers_sqlite` | Load only customers rules (keeps others) |
 
 ---
 
@@ -82,14 +92,18 @@ This loads rules from `rules/customers.json` and runs them on the sample data. Y
 Data sources are defined in `config/data_sources.json`. To validate:
 
 ```bash
-# Check one source (e.g. customers from CSV)
+# Check one source (customers from CSV)
 python scripts/run_expectations.py --data-source-name customers_csv --save-results
+
+# Check one source (customers from SQLite - requires data_store.db with customers table)
+python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
 
 # Check all sources
 python scripts/run_expectations.py --all --save-results
 
 # Load rules for one source, then validate (single source only)
 python scripts/run_expectations.py --data-source-name customers_csv --seed-dq-rules --save-results
+python scripts/run_expectations.py --data-source-name customers_sqlite --seed-dq-rules --save-results
 
 # Load all rules, then validate all sources
 python scripts/run_expectations.py --all --seed-dq-rules --save-results
@@ -103,6 +117,8 @@ python scripts/seed_dq_rules.py
 
 # Or load only rules for one source (e.g. customers)
 python scripts/seed_dq_rules.py --data-source-name customers_csv
+# or for SQLite source (uses same rules_table "customers")
+python scripts/seed_dq_rules.py --data-source-name customers_sqlite
 ```
 
 ### Option B: Load your own CSV
@@ -125,6 +141,49 @@ python scripts/seed_dq_rules.py --data-source-name customers_csv
    ```
 
    Or combine: `python scripts/run_expectations.py --data-source-name your_source --seed-dq-rules` loads rules for that source only, then validates.
+
+### Full options example
+
+Run with all available options (useful for scheduled jobs or CI):
+
+```bash
+python scripts/run_expectations.py \
+  --data-source-name customers_sqlite \
+  --seed-dq-rules \
+  --save-results \
+  --send-report \
+  --verbose \
+  --batch-id "nightly-2024-01-15" \
+  --sources-config config/data_sources.json \
+  --reports-config config/dq_report_config.json
+```
+
+Or for all sources with full options:
+
+```bash
+python scripts/run_expectations.py \
+  --all \
+  --seed-dq-rules \
+  --save-results \
+  --send-report \
+  --verbose \
+  --batch-id "nightly-run" \
+  --sources-config config/data_sources.json \
+  --reports-config config/dq_report_config.json
+```
+
+| Option | Description |
+|--------|-------------|
+| `--data-source-name`, `-s` | Single source to validate (e.g. `customers_csv`, `customers_sqlite`) |
+| `--all`, `-a` | Validate all sources from config |
+| `--sources-config` | Path to data sources config (default: `config/data_sources.json`) |
+| `--dataset-name` | Override rules_table from config (optional) |
+| `--seed-dq-rules` | Load rules from JSON before validation |
+| `--batch-id` | Batch identifier for validation_results |
+| `--save-results` | Persist results to database |
+| `--verbose`, `-v` | Print per-rule details |
+| `--send-report` | Generate email and/or HTML reports |
+| `--reports-config` | Path to reports config (default: `config/dq_report_config.json`) |
 
 ---
 
@@ -183,7 +242,13 @@ with RuleManager() as rm:
 import pandas as pd
 from dq_framework.validator import DataQualityValidator
 
-df = pd.read_csv("data.csv")  # or any DataFrame
+# From CSV
+df = pd.read_csv("data/sample_customers_100.csv")
+
+# Or from SQLite (same structure as customers_sqlite source)
+# from sqlalchemy import create_engine
+# engine = create_engine("sqlite:///data_store.db")
+# df = pd.read_sql_table("customers", engine)
 
 with DataQualityValidator() as validator:
     result = validator.validate_dataset(
@@ -402,7 +467,7 @@ python -m dq_framework.cli create-rule \
 python -m dq_framework.cli list-rules
 
 # Validate a CSV file
-python -m dq_framework.cli validate --file data.csv --data-source-name customers --save-results
+python -m dq_framework.cli validate --file data/sample_customers_100.csv --data-source-name customers --save-results
 ```
 
 ---
