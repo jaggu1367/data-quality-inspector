@@ -1,8 +1,12 @@
 """
 Builds Great Expectations expectations from database rules
 """
+import logging
 from typing import Dict, Any, Optional
 import great_expectations as ge
+
+# Suppress redundant "ID of active Batch and ID of active loaded BatchData differ" warning
+logging.getLogger("great_expectations.core.batch_manager").setLevel(logging.ERROR)
 import pandas as pd
 
 from dq_framework.database import DataQualityRule
