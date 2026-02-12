@@ -22,12 +22,12 @@ def _escape_html(text: str) -> str:
 
 
 def _build_layer1_html(source_info: Dict[str, Any]) -> str:
-    """Layer 1: Input data source details as HTML."""
+    """Input data source details as HTML."""
     cols = source_info.get("columns", [])
     cols_str = ", ".join(str(c) for c in cols) if cols else "N/A"
     return f"""
     <section class="layer">
-      <h2>Layer 1: Input Data Source</h2>
+      <h2>Input Data Source</h2>
       <table>
         <tr><th>Data Source Name</th><td>{_escape_html(source_info.get('data_source_name', 'N/A'))}</td></tr>
         <tr><th>Source Type</th><td>{_escape_html(source_info.get('source_type', 'N/A'))}</td></tr>
@@ -40,7 +40,7 @@ def _build_layer1_html(source_info: Dict[str, Any]) -> str:
 
 
 def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
-    """Layer 2: Data quality report as HTML."""
+    """Data quality report as HTML."""
     summary = dq_report.get("summary", {})
     total = summary.get("total_rules", 0)
     passed = summary.get("passed", 0)
@@ -48,10 +48,13 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
     overall = "PASSED" if dq_report.get("success", False) else "FAILED"
     status_class = "status-passed" if overall == "PASSED" else "status-failed"
 
+    PASS_SYMBOL = "&#9989;"   # ✅
+    FAIL_SYMBOL = "&#10060;"  # ❌
     rows = []
     for rule_name, rule_result in dq_report.get("results", {}).items():
         ok = rule_result.get("success", False)
-        status = "PASS" if ok else "FAIL"
+        symbol = PASS_SYMBOL if ok else FAIL_SYMBOL
+        title = "Pass" if ok else "Fail"
         row_class = "pass" if ok else "fail"
         detail = ""
         if not ok:
@@ -64,13 +67,13 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
                 if isinstance(inner, dict) and "unexpected_count" in inner:
                     detail = f"Unexpected count: {inner['unexpected_count']}"
         detail_cell = f'<span class="detail">{_escape_html(detail)}</span>' if detail else ""
-        rows.append(f"        <tr class=\"{row_class}\"><td>[{status}]</td><td>{_escape_html(rule_name)}</td><td>{detail_cell}</td></tr>")
+        rows.append(f"        <tr class=\"{row_class}\"><td class=\"status-cell\"><span class=\"status-icon\" title=\"{title}\">{symbol}</span></td><td>{_escape_html(rule_name)}</td><td>{detail_cell}</td></tr>")
 
     rows_html = "\n".join(rows) if rows else "        <tr><td colspan=\"3\">No rules executed.</td></tr>"
 
     return f"""
     <section class="layer">
-      <h2>Layer 2: Data Quality Report</h2>
+      <h2>Data Quality Report</h2>
       <table class="summary">
         <tr><th>Overall Status</th><td class=\"{status_class}\">{overall}</td></tr>
         <tr><th>Total Rules</th><td>{total}</td></tr>
@@ -79,7 +82,7 @@ def _build_layer2_html(dq_report: Dict[str, Any]) -> str:
       </table>
       <h3>Per-rule results</h3>
       <table class="rules">
-        <thead><tr><th>Status</th><th>Rule</th><th>Details</th></tr></thead>
+        <thead><tr><th class=\"status-col\">Status</th><th>Rule</th><th>Details</th></tr></thead>
         <tbody>
 {rows_html}
         </tbody>
@@ -110,9 +113,14 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
     .summary th {{ width: 140px; }}
     .status-passed {{ color: #0a7; font-weight: 600; }}
     .status-failed {{ color: #c33; font-weight: 600; }}
-    .rules th {{ width: 80px; }}
-    .rules .pass {{ background: #f0fff0; }}
-    .rules .fail {{ background: #fff0f0; }}
+    .rules th {{ width: 60px; }}
+    .rules .status-col {{ text-align: center; }}
+    .rules .status-cell {{ text-align: center; vertical-align: middle; }}
+    .status-icon {{ font-size: 1.25em; display: inline-block; }}
+    .rules .pass {{ background: #f0fff4; }}
+    .rules .pass .status-icon {{ color: #0a7; }}
+    .rules .fail {{ background: #fff5f5; }}
+    .rules .fail .status-icon {{ color: #c33; }}
     .detail {{ font-size: 0.9em; color: #666; }}
   </style>
 </head>
