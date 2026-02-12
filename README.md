@@ -7,7 +7,9 @@
 ## What’s in this repo?
 
 - **Define rules** (e.g. “this column must not be null”, “values must be in this set”) and store them in SQLite.
-- **Validate** DataFrames or CSV files against those rules and get pass/fail results.
+- **Validate** DataFrames, CSV files, or SQLite tables against those rules and get pass/fail results.
+- **Data sources config**—declare CSV and SQLite sources in `config/data_sources.json` and run validations by source name.
+- **Load CSV into SQLite**—use `load_csv_to_sqlite.py` to load CSV data into `data_store.db` for validation.
 - **Track history** of every validation (timestamps, batch IDs, full results).
 - **Use from code or CLI**—create rules, list them, and run validations from Python or the command line.
 
@@ -19,6 +21,7 @@
 
 - [Get started in 3 steps](#get-started-in-3-steps)
 - [Run the examples](#run-the-examples)
+- [Data sources and loading](#data-sources-and-loading)
 - [Quick start in code](#quick-start-in-code)
 - [Configuration](#configuration)
 - [Command-line interface](#command-line-interface)
@@ -85,9 +88,69 @@ From the project root:
 | One-time DB setup          | `python db_init.py`              |
 | Basic rules + validation   | `python examples/basic_usage.py` |
 | Regex, stats, table rules  | `python examples/advanced_usage.py` |
-| Run all DB rules on sample CSV (100 rows) | `python scripts/run_expectations.py --save-results --verbose` |
+| Load CSV into SQLite (`data_store.db`) | `python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers` |
+| Run rules from CSV source | `python scripts/run_expectations.py --data-source-name customers_csv --save-results` |
+| Run rules from SQLite source | `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results` |
+| Run rules on CSV file (legacy) | `python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results --verbose` |
 
 Make sure you’ve run `python db_init.py` at least once (or the example scripts will create the tables when you run them).
+
+---
+
+## Data sources and loading
+
+The framework supports validating data from **CSV files** or **SQLite tables**. Define sources in `config/data_sources.json` and run validations by source name.
+
+### Data sources config
+
+Edit `config/data_sources.json` to declare your sources:
+
+```json
+{
+  "sources": {
+    "customers_csv": {
+      "type": "csv",
+      "path": "data/sample_customers_100.csv",
+      "dataset_name": "customers"
+    },
+    "customers_sqlite": {
+      "type": "sqlite",
+      "database": "data_store.db",
+      "table": "customers",
+      "dataset_name": "customers"
+    }
+  }
+}
+```
+
+Each source has:
+- **`type`**: `"csv"` or `"sqlite"`
+- **`dataset_name`**: used to match rules (e.g. rules for `dataset_name: "customers"`)
+- **CSV**: `path` — path to the CSV file (relative to project root)
+- **SQLite**: `database` and `table` — database file and table name
+
+### Load CSV into SQLite
+
+Use `load_csv_to_sqlite.py` to load CSV data into `data_store.db`:
+
+```bash
+python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers
+```
+
+Data is stored in `data_store.db` in the project root (separate from `dq_framework.db`, which holds rules and validation results).
+
+### Run expectations by source name
+
+```bash
+# From CSV source (config)
+python scripts/run_expectations.py --data-source-name customers_csv --save-results
+
+# From SQLite source (config)
+python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
+
+# Custom config file
+python scripts/run_expectations.py --data-source-name customers_sqlite --sources-config path/to/sources.json
+```
 
 ---
 
@@ -195,11 +258,37 @@ python -m dq_framework.cli validate \
     --verbose
 ```
 
+### Run expectations from data sources
+
+Use `run_expectations.py` with `--data-source-name` to validate from CSV or SQLite (as defined in `config/data_sources.json`):
+
+```bash
+# From CSV or SQLite source (by name)
+python scripts/run_expectations.py --data-source-name customers_csv --save-results
+python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose
+
+# Legacy: direct CSV file path
+python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results
+```
+
+### Load CSV into SQLite
+
+```bash
+python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers
+```
+
 ---
 
 ## Working with the database
 
-- **Location:** By default, `dq_framework.db` is in the project root. Override with `DB_PATH` in `.env`.
+The framework uses two SQLite databases:
+
+| Database | Purpose |
+|----------|---------|
+| `dq_framework.db` | Rules (`data_quality_rules`), validation results (`validation_results`). Override with `DB_PATH` in `.env`. |
+| `data_store.db` | Data loaded from CSV via `load_csv_to_sqlite.py`. Used when validating from SQLite sources. |
+
+- **Location:** Both files are in the project root by default. Override `dq_framework.db` with `DB_PATH` in `.env`.
 - **Backup:** Copy the `.db` file, or use SQLite’s backup/restore. No separate server to manage.
 
 ### Query from Python (SQLAlchemy)
@@ -610,11 +699,13 @@ For more details on Great Expectations behavior (e.g. `mostly`, `strict_min`, `s
 
 ```
 dq-ge-poc/
+├── config/
+│   └── data_sources.json   ← Declare CSV and SQLite sources for run_expectations
 ├── db_init.py              ← Run this first to create the database and seed data_quality_rules
-├── dq_framework/           ← Main package (modular: config, persistence, validation)
+├── dq_framework/            ← Main package (modular: config, persistence, validation)
 │   ├── config.py
 │   ├── database.py         ← Models: DataQualityRule, ValidationResult; DatabaseManager
-│   ├── repositories/      ← Data access (data_quality_rules, validation_results)
+│   ├── repositories/       ← Data access (data_quality_rules, validation_results)
 │   │   ├── rule_repository.py
 │   │   └── validation_result_repository.py
 │   ├── rule_manager.py     ← Rule service (CRUD using RuleRepository)
@@ -626,11 +717,13 @@ dq-ge-poc/
 │   └── advanced_usage.py
 ├── scripts/
 │   ├── init_database.py    ← Alternative to db_init.py (tables only)
-│   └── run_expectations.py  ← Run active rules from data_quality_rules on a CSV
+│   ├── load_csv_to_sqlite.py  ← Load CSV into data_store.db
+│   └── run_expectations.py   ← Run active rules from data_quality_rules (CSV or SQLite via config)
 ├── requirements.txt
 ├── setup.py
 ├── .env.example
-├── dq_framework.db         ← Created when you run db_init.py or the examples
+├── dq_framework.db         ← Created when you run db_init.py (rules, validation results)
+├── data_store.db           ← Created when you run load_csv_to_sqlite.py (loaded data)
 ├── README.md
 └── DATABASE_SCHEMA.md      ← Full schema and query examples
 ```
