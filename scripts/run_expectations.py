@@ -144,7 +144,7 @@ def main():
         help=f"Path to data sources config (default: {DEFAULT_SOURCES_CONFIG})",
     )
     parser.add_argument("--dataset-name", default=None, help="Override rules_table from config (optional)")
-    parser.add_argument("--seed-dq-rules", action="store_true", help="Run seed_dq_rules.py to load all rules from JSON before validation")
+    parser.add_argument("--seed-dq-rules", action="store_true", help="Load rules from JSON before validation (only for --data-source-name when specified, else all)")
     parser.add_argument("--batch-id", default=None, help="Optional batch identifier for validation_results")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
@@ -161,7 +161,13 @@ def main():
     db_manager.create_tables()
     if args.seed_dq_rules:
         import subprocess
-        subprocess.run([sys.executable, os.path.join(_root, "scripts", "seed_dq_rules.py")], check=True, cwd=_root)
+        seed_cmd = [sys.executable, os.path.join(_root, "scripts", "seed_dq_rules.py")]
+        if args.all:
+            pass  # seed all rules when --all
+        elif args.data_source_name:
+            seed_cmd.extend(["--data-source-name", args.data_source_name])
+            seed_cmd.extend(["--sources-config", args.sources_config])
+        subprocess.run(seed_cmd, check=True, cwd=_root)
     else:
         seed_data_quality_rules_if_empty()
     print("   Database ready.")

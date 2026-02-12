@@ -96,25 +96,37 @@ def seed_dq_rules(
     rules_dir: str = "rules",
     sources_config: str = DEFAULT_SOURCES_CONFIG,
     use_sources_filter: bool = True,
+    rules_table_filter: set[str] | None = None,
 ):
     """
-    Seed rules from JSON files. If replace_existing, clears all first.
-    Otherwise upserts: update if same rule_name+dataset exists.
+    Seed rules from JSON files. If replace_existing, clears rules first (all, or only
+    those matching rules_table_filter when provided). Otherwise upserts.
+    rules_table_filter: when set, only load and seed rules for these rules_table names.
     """
-    # Load rules (only for dataset_names in data_sources when use_sources_filter)
-    dataset_names = get_dataset_names_from_sources(sources_config) if use_sources_filter else None
+    if rules_table_filter:
+        dataset_names = rules_table_filter
+        use_sources_filter = False
+    else:
+        dataset_names = get_dataset_names_from_sources(sources_config) if use_sources_filter else None
     all_rules = get_all_rules(rules_dir, dataset_names)
-    
+
     if not all_rules:
         print("  No rules found in JSON files. Nothing to seed.")
         return
-    
+
     session = db_manager.get_session()
     try:
         if replace_existing:
-            deleted = session.query(DataQualityRule).delete()
-            session.commit()
-            print(f"  Cleared {deleted} existing rules.")
+            if rules_table_filter:
+                deleted = session.query(DataQualityRule).filter(
+                    DataQualityRule.data_source_name.in_(rules_table_filter)
+                ).delete(synchronize_session=False)
+                session.commit()
+                print(f"  Cleared {deleted} existing rules for {rules_table_filter}.")
+            else:
+                deleted = session.query(DataQualityRule).delete()
+                session.commit()
+                print(f"  Cleared {deleted} existing rules.")
 
         added = 0
         updated = 0
@@ -150,9 +162,30 @@ def seed_dq_rules(
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(description="Seed data_quality_rules from rules/*.json")
+    ap.add_argument("--data-source-name", "-s", help="Only seed rules for this data source's rules_table")
+    ap.add_argument("--sources-config", default=DEFAULT_SOURCES_CONFIG, help="Path to data sources config")
+    a = ap.parse_args()
     print("Seeding data quality rules from JSON files...")
     db_manager.create_tables()
-    seed_dq_rules(replace_existing=True)
+    rules_filter = None
+    if a.data_source_name:
+        path = a.sources_config if os.path.isabs(a.sources_config) else os.path.join(_root, a.sources_config)
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as f:
+                cfg = json.load(f)
+            for s in cfg.get("sources", []):
+                if isinstance(s, dict) and s.get("data_source_name") == a.data_source_name:
+                    rules_filter = {s.get("rules_table") or s.get("data_source_name")}
+                    break
+        if not rules_filter:
+            print(f"  Warning: data_source_name '{a.data_source_name}' not found in config. Seeding all.")
+    seed_dq_rules(
+        replace_existing=True,
+        sources_config=a.sources_config,
+        rules_table_filter=rules_filter,
+    )
     print("Done. Run: python scripts/run_expectations.py --save-results")
 
 
