@@ -9,8 +9,8 @@ Rules are read from the data_quality_rules table (active only). Results are opti
 saved to validation_results.
 
 Usage (from project root):
-  python scripts/run_expectations.py --data-source-name customers_csv
-  python scripts/run_expectations.py --data-source-name customers_sqlite
+  python scripts/run_expectations.py --data-source-name customers_csv --save-results
+  python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
   python scripts/run_expectations.py --file data/sample_customers_100.csv --dataset-name customers --save-results
 """
 import json
