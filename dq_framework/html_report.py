@@ -2,12 +2,15 @@
 HTML report for data quality validations.
 Two layers: (1) Input data source details, (2) Data quality report.
 Output directory configured in config/dq_report_config.json.
+Uses HTML template from report_templates/dq_report.html when available.
 """
 import os
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 from dq_framework.email_report import load_reports_config
+
+DEFAULT_TEMPLATE_PATH = "report_templates/dq_report.html"
 
 
 def _escape_html(text: str) -> str:
@@ -114,24 +117,52 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
     </section>"""
 
 
-def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) -> str:
-    """Build full HTML report with both layers."""
+def _load_report_template(root_dir: str, template_path: Optional[str] = None) -> Optional[str]:
+    """Load HTML template from report_templates. Returns template content or None if not found."""
+    path = template_path or DEFAULT_TEMPLATE_PATH
+    full_path = path if os.path.isabs(path) else os.path.join(root_dir, path)
+    if not os.path.isfile(full_path):
+        return None
+    with open(full_path, encoding="utf-8") as f:
+        return f.read()
+
+
+def build_html_report(
+    source_info: Dict[str, Any],
+    dq_report: Dict[str, Any],
+    root_dir: Optional[str] = None,
+    template_path: Optional[str] = None,
+) -> str:
+    """Build full HTML report with both layers using template from report_templates."""
     layer1 = _build_layer1_html(source_info)
     layer2 = _build_layer2_html(dq_report, source_info)
     dsn = _escape_html(source_info.get("data_source_name", "Data Quality Report"))
+    page_title = f"Data Quality Report: {dsn}"
+    report_title = f"Data Quality Report: {dsn}"
     is_failed = not dq_report.get("success", False)
     failure_banner = ""
     if is_failed:
-        failure_banner = """
-  <div class="overall-failure-banner">
+        failure_banner = """  <div class="overall-failure-banner">
     &#10060; VALIDATION FAILED &mdash; One or more data quality rules did not pass
-  </div>"""
+  </div>
+"""
+
+    root = root_dir or os.getcwd()
+    template = _load_report_template(root, template_path)
+    if template:
+        return template.replace("{{page_title}}", page_title).replace(
+            "{{report_title}}", report_title
+        ).replace("{{failure_banner}}", failure_banner).replace(
+            "{{layer1_html}}", layer1
+        ).replace("{{layer2_html}}", layer2)
+
+    # Fallback: inline HTML (same output as before template was introduced)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Quality Report: {dsn}</title>
+  <title>{page_title}</title>
   <style>
     body {{ font-family: system-ui, -apple-system, sans-serif; margin: 2rem; max-width: 900px; }}
     .overall-failure-banner {{ background: #c33; color: white; font-weight: 700; font-size: 1.1rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }}
@@ -159,7 +190,7 @@ def build_html_report(source_info: Dict[str, Any], dq_report: Dict[str, Any]) ->
 </head>
 <body>
 {failure_banner}
-  <h1>Data Quality Report: {dsn}</h1>
+  <h1>{report_title}</h1>
 {layer1}
 {layer2}
 </body>
@@ -170,11 +201,14 @@ def write_html_report(
     source_info: Dict[str, Any],
     dq_report: Dict[str, Any],
     output_path: str,
+    root_dir: Optional[str] = None,
+    template_path: Optional[str] = None,
 ) -> str:
     """
-    Write HTML report to file. Returns the absolute path of the written file.
+    Write HTML report to file using template from report_templates.
+    Returns the absolute path of the written file.
     """
-    html = build_html_report(source_info, dq_report)
+    html = build_html_report(source_info, dq_report, root_dir, template_path)
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
@@ -188,7 +222,8 @@ def maybe_write_html_report(
     root_dir: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Write HTML report if enabled in config. Returns output file path if written, None otherwise.
+    Write HTML report if enabled in config. Uses template from report_templates.
+    Returns output file path if written, None otherwise.
     """
     root = root_dir or os.getcwd()
     config = load_reports_config(config_path, root)
@@ -198,8 +233,9 @@ def maybe_write_html_report(
 
     output_dir = html_cfg.get("output_dir", "html_reports")
     out_path = output_dir if os.path.isabs(output_dir) else os.path.join(root, output_dir)
+    template_path = html_cfg.get("template_file", DEFAULT_TEMPLATE_PATH)
     dsn_safe = source_info.get("data_source_name", "report").replace("/", "_").replace("\\", "_")
     ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"{dsn_safe}_{ts}.html"
     full_path = os.path.join(out_path, filename)
-    return write_html_report(source_info, dq_report, full_path)
+    return write_html_report(source_info, dq_report, full_path, root, template_path)

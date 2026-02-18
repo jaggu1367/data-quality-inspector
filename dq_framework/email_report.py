@@ -80,10 +80,25 @@ def build_dq_report_layer(dq_report: Dict[str, Any]) -> str:
 
 
 def build_email_body(source_info: Dict[str, Any], dq_report: Dict[str, Any]) -> str:
-    """Build full email body with both layers."""
+    """Build plain-text email body with both layers. Kept for backwards compatibility."""
     layer1 = build_source_details_layer(source_info)
     layer2 = build_dq_report_layer(dq_report)
     return layer1 + "\n" + layer2
+
+
+def build_email_body_html(
+    source_info: Dict[str, Any],
+    dq_report: Dict[str, Any],
+    root_dir: str,
+    template_path: Optional[str] = None,
+) -> str:
+    """
+    Build HTML email body using the same template as HTML reports.
+    Ensures email and HTML reports look identical.
+    """
+    from dq_framework.html_report import build_html_report
+
+    return build_html_report(source_info, dq_report, root_dir, template_path)
 
 
 def send_email_report(
@@ -109,13 +124,19 @@ def send_email_report(
     subject = subject_template.format(
         data_source_name=source_info.get("data_source_name", "unknown")
     )
-    body = build_email_body(source_info, dq_report)
 
-    msg = MIMEMultipart()
+    # Use same HTML template as file reports so email and HTML reports look identical
+    html_cfg = config.get("html", {})
+    template_path = html_cfg.get("template_file")
+    body_html = build_email_body_html(source_info, dq_report, root, template_path)
+
+    msg = MIMEMultipart("alternative")
     msg["From"] = email_cfg.get("from_address", "")
     msg["To"] = ", ".join(to_addresses) if isinstance(to_addresses, list) else str(to_addresses)
     msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
+    # Plain text fallback for clients that don't support HTML
+    msg.attach(MIMEText(build_email_body(source_info, dq_report), "plain"))
+    msg.attach(MIMEText(body_html, "html"))
 
     try:
         with smtplib.SMTP(email_cfg.get("smtp_host", "localhost"), email_cfg.get("smtp_port", 587)) as server:
