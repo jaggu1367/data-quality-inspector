@@ -6,12 +6,29 @@
 
 From the project root (folder with `dq_framework` and `scripts`), copy and run:
 
+**Step 1:** Install required packages  
 ```bash
 pip install -r requirements.txt
+```
+
+**Step 2:** Initialize the database  
+```bash
 python scripts/init_database.py
+```
+
+**Step 3:** Seed the database with data quality rules  
+```bash
 python scripts/seed_dq_rules.py
+```
+
+**Step 4:** Load sample CSV data into SQLite  
+```bash
 python scripts/load_csv_to_sqlite.py --all
-python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
+```
+
+**Step 5:** Run data quality expectations on the customers (SQLite) source  
+```bash
+python scripts/run_expectations.py --source-id customers_sqlite --save-results --send-report --verbose
 ```
 
 You should see validation results (PASSED or FAILED). Done.
@@ -20,13 +37,15 @@ You should see validation results (PASSED or FAILED). Done.
 
 ## Common commands
 
-| Action | Command |
-|--------|---------|
-| Seed rules | `python scripts/seed_dq_rules.py` |
-| Load sample data | `python scripts/load_csv_to_sqlite.py --all` |
-| Validate one source | `python scripts/run_expectations.py --source-id customers_sqlite --save-results` |
-| Validate all sources | `python scripts/run_expectations.py --all --save-results` |
-| List rules | `python -m dq_framework.cli list-rules` |
+| Action                | Command                                                           |
+|-----------------------|-------------------------------------------------------------------|
+| Initialize database   | `python scripts/init_database.py`                                 |
+| Seed rules            | `python scripts/seed_dq_rules.py`                                 |
+| Load all sample data  | `python scripts/load_csv_to_sqlite.py --all`                      |
+| Load one source data  | `python scripts/load_csv_to_sqlite.py --source-id customers_csv`  |
+| Validate one source   | `python scripts/run_expectations.py --source-id customers_sqlite --save-results --send-report` |
+| Validate all sources  | `python scripts/run_expectations.py --all --save-results --send-report`         |
+| List rules            | `python -m dq_framework.cli list-rules`                           |
 
 ---
 
