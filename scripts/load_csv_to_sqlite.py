@@ -5,9 +5,9 @@ Treats the first row as header by default. Table schema is inferred from the CSV
 Use --table to specify the target table name, or it is derived from the CSV filename.
 
 Usage (from project root):
+  python scripts/load_csv_to_sqlite.py --all          # Load all sample data (customers, orders, products)
   python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers
   python scripts/load_csv_to_sqlite.py --file data/other_data.csv
-  python scripts/load_csv_to_sqlite.py --file data/file.csv --no-header
 """
 import re
 import sys
@@ -23,6 +23,12 @@ from sqlalchemy import create_engine
 
 DEFAULT_CSV = "data/sample_customers_100.csv"
 DATA_STORE_DB = "data_store.db"
+
+SAMPLE_CSVS = [
+    ("data/sample_customers_100.csv", "customers"),
+    ("data/orders.csv", "orders"),
+    ("data/products.csv", "products"),
+]
 
 
 def sanitize_column_name(name: str) -> str:
@@ -82,6 +88,12 @@ def main():
         description="Load any CSV file into SQLite table (header row by default)"
     )
     parser.add_argument(
+        "--all",
+        "-a",
+        action="store_true",
+        help="Load all sample CSVs (customers, orders, products) into data_store.db",
+    )
+    parser.add_argument(
         "--file",
         "-f",
         default=DEFAULT_CSV,
@@ -112,6 +124,30 @@ def main():
     )
     args = parser.parse_args()
 
+    db_path = DATA_STORE_DB if os.path.isabs(DATA_STORE_DB) else os.path.join(_root, DATA_STORE_DB)
+
+    if args.all:
+        print("=" * 60)
+        print("Load CSV to SQLite (all sample data)")
+        print("=" * 60)
+        print(f"\n  Database: {db_path}\n")
+        try:
+            total = 0
+            for rel_path, table_name in SAMPLE_CSVS:
+                csv_path = os.path.join(_root, rel_path) if not os.path.isabs(rel_path) else rel_path
+                if not os.path.isfile(csv_path):
+                    print(f"  Warning: {rel_path} not found, skipping.")
+                    continue
+                rows = load_csv_to_sqlite(csv_path, table_name, delimiter=args.delimiter, encoding=args.encoding)
+                print(f"  Loaded {rows} rows into '{table_name}'")
+                total += rows
+            print(f"\n  Total: {total} rows loaded.")
+            print("\n" + "=" * 60)
+        except Exception as e:
+            print(f"\nError: {e}", file=sys.stderr)
+            sys.exit(1)
+        return
+
     csv_path = args.file
     if not os.path.isabs(csv_path):
         csv_path = os.path.join(_root, csv_path)
@@ -121,8 +157,6 @@ def main():
         sys.exit(1)
 
     table_name = args.table or derive_table_name(csv_path)
-
-    db_path = DATA_STORE_DB if os.path.isabs(DATA_STORE_DB) else os.path.join(_root, DATA_STORE_DB)
 
     print("=" * 60)
     print("Load CSV to SQLite")

@@ -2,13 +2,85 @@
 
 > Validate your data with **Great Expectations** (v1.11.3) and store rules in a **SQLite** database—no separate database server needed.
 
+**First time here?** Run these four commands from the project root:
+
+```bash
+pip install -r requirements.txt
+python db_init.py
+python scripts/load_csv_to_sqlite.py --all
+python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
+```
+
+For more detail and options, see [First-time setup](#first-time-setup) below.
+
+---
+
+## First-time setup
+
+Follow these steps from the **project root** (the folder that contains `dq_framework`, `scripts`, and `db_init.py`).
+
+### 1. Check Python
+
+You need **Python 3.8+** and **pip**. Check your versions:
+
+```bash
+python --version
+pip --version
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+You're ready when this completes without errors.
+
+### 3. Initialize the database
+
+```bash
+python db_init.py
+```
+
+You should see: *"Database tables created successfully."* A file `dq_framework.db` will appear in the project root—this stores your rules and validation history.
+
+### 4. Load sample data (for SQLite sources)
+
+The sample config uses SQLite tables. Load CSV files into `data_store.db`:
+
+| Command | Description |
+|---------|-------------|
+| `python scripts/load_csv_to_sqlite.py --all` | Load all sample data (customers, orders, products) |
+| `python scripts/load_csv_to_sqlite.py -a` | Same as `--all` (short form) |
+| `python scripts/load_csv_to_sqlite.py --file data/sample_customers_100.csv --table customers` | Load a specific CSV into a named table |
+| `python scripts/load_csv_to_sqlite.py -f data/orders.csv -t orders` | Short form: load `orders.csv` into `orders` table |
+| `python scripts/load_csv_to_sqlite.py --file data/products.csv` | Load a file; table name is derived from filename (`products`) |
+| `python scripts/load_csv_to_sqlite.py` | Load default file (`data/sample_customers_100.csv`); table name from filename |
+| `python scripts/load_csv_to_sqlite.py --file data/file.csv --no-header` | Load CSV without header row (columns become `col_0`, `col_1`, …) |
+| `python scripts/load_csv_to_sqlite.py --all --delimiter ";"` | Load all with semicolon delimiter |
+| `python scripts/load_csv_to_sqlite.py -f data/file.csv --encoding utf-16` | Load with specific encoding |
+
+**Options:** `-f/--file` path, `-t/--table` name, `--no-header`, `-d/--delimiter` (default `,`), `-e/--encoding` (default `utf-8`). Use `--all` or `-a` to load all sample CSVs at once.
+
+### 5. Run your first validation
+
+```bash
+python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
+```
+
+You should see validation results: *"Overall: PASSED (or FAILED)"* with rule-by-rule pass/fail details.
+
+---
+
+**You're all set.** From here you can validate other sources or all sources at once (see [Run validations](#run-validations)).
+
 ---
 
 ## Quick reference
 
 | I want to… | Command |
 |------------|---------|
-| **First-time setup** | `pip install -r requirements.txt` → `python db_init.py` |
+| **Load all sample data into SQLite** | `python scripts/load_csv_to_sqlite.py --all` |
 | **Run validations** | `python scripts/run_expectations.py --source-id customers_sqlite --save-results` |
 | **Validate all sources** | `python scripts/run_expectations.py --all --save-results` |
 | **List rules** | `python -m dq_framework.cli list-rules` |
@@ -28,8 +100,7 @@
 
 ## Table of contents
 
-- [Prerequisites](#prerequisites)
-- [Get started in 3 steps](#get-started-in-3-steps)
+- [First-time setup](#first-time-setup)
 - [Run validations](#run-validations)
 - [Configuration](#configuration)
 - [Quick start in code](#quick-start-in-code)
@@ -43,92 +114,19 @@
 
 ---
 
-## Prerequisites
-
-- **Python 3.8 or newer**
-- **pip** (usually comes with Python)
-
-To check your versions:
-
-```bash
-python --version
-pip --version
-```
-
----
-
-## Get started in 3 steps
-
-Run these from the **project root** (the folder that contains `dq_framework`, `scripts`, and `db_init.py`).
-
-### Step 1: Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-> **Tip:** Optionally install in editable mode to import `dq_framework` from anywhere: `pip install -e .`
-
-### Step 2: Create the database and tables
-
-```bash
-python db_init.py
-```
-
-Expected output:
-
-```
-Initializing database...
-  Database file: dq_framework.db
-  Database tables created successfully.
-  Run validations: python scripts/run_expectations.py
-```
-
-A file `dq_framework.db` will appear in the project root—that’s your SQLite database. Default rules are seeded automatically if the rules table is empty.
-
-### Step 3: Run a validation
-
-The project includes sample data sources (SQLite tables and CSV files). Run validations against the `customers` table in SQLite:
-
-```bash
-python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
-```
-
-You should see output similar to:
-
-```
-============================================================
-Source: customers_sqlite (sqlite)
-============================================================
-  Rows: N, Columns: ['customer_id', 'name', 'email', ...]
-  Running active rules for 'customers'...
-
-  RESULTS:
-    Overall: PASSED (or FAILED)
-    Rules:   X/Y passed, Z failed
-```
-
-> **Note:** For SQLite sources, ensure `data_store.db` and the `customers` table exist. Run `python scripts/load_csv_to_sqlite.py` first to populate the sample database from CSV files if needed.
-
-That’s it—you’re set up.
-
----
-
 ## Run validations
 
-Data sources are defined in `config/data_sources.json`. The sample config includes SQLite tables and CSV files. From the project root:
+After [first-time setup](#first-time-setup), you can run validations anytime. Data sources are defined in `config/data_sources.json`.
 
 | What you want to do | Command |
 |---------------------|---------|
-| One-time DB setup | `python db_init.py` |
-| Validate customers table (SQLite) | `python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose` |
-| Validate orders table (SQLite) | `python scripts/run_expectations.py --source-id orders_sqlite --save-results` |
-| Validate products table (SQLite) | `python scripts/run_expectations.py --source-id products_sqlite --save-results` |
-| Validate all configured sources | `python scripts/run_expectations.py --all --save-results` |
-| Load rules from JSON, then validate | `python scripts/run_expectations.py --source-id customers_sqlite --seed-dq-rules --save-results` |
-| Generate HTML/email report | `python scripts/run_expectations.py --source-id customers_sqlite --send-report` |
+| Validate customers (SQLite) | `python scripts/run_expectations.py --source-id customers_sqlite --save-results` |
+| Validate orders (SQLite) | `python scripts/run_expectations.py --source-id orders_sqlite --save-results` |
+| Validate products (SQLite) | `python scripts/run_expectations.py --source-id products_sqlite --save-results` |
+| **Validate all sources** | `python scripts/run_expectations.py --all --save-results` |
+| Generate HTML/email report | `python scripts/run_expectations.py --all --save-results --send-report` |
 
-> **Note:** For SQLite sources, ensure `data_store.db` and the required tables exist. Run `python scripts/load_csv_to_sqlite.py` first to populate the sample database from CSV files if needed.
+Add `--verbose` to any command to see per-rule pass/fail details.
 
 ---
 
@@ -395,10 +393,10 @@ data-quality-inspector/
 
 | Issue | What to try |
 |-------|-------------|
-| **No active rules found** | Run `python db_init.py` to seed default rules, or `python scripts/run_expectations.py --seed-dq-rules` to load rules from `rules/*.json` |
-| **FileNotFoundError** (data file) | For SQLite: run `python scripts/load_csv_to_sqlite.py` to create `data_store.db`. Check paths in `config/data_sources.json` |
-| **ModuleNotFoundError: dq_framework** | Run commands from the project root, or install in editable mode: `pip install -e .` |
-| **Unknown data source** | Ensure the source name (e.g. `customers_sqlite`) exists in `config/data_sources.json` |
+| **No active rules found** | Run `python db_init.py` (Step 3 of [First-time setup](#first-time-setup)) |
+| **FileNotFoundError** (data file) | Run `python scripts/load_csv_to_sqlite.py --all` (Step 4 of [First-time setup](#first-time-setup)) to create `data_store.db` |
+| **ModuleNotFoundError: dq_framework** | Run all commands from the project root (the folder with `db_init.py`), or run `pip install -e .` |
+| **Unknown data source** | Check that the source name exists in `config/data_sources.json` |
 
 ---
 
