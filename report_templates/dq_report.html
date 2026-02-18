@@ -22,10 +22,26 @@
     .rules .status-col { text-align: center; width: 60px; }
     .rules .status-cell { text-align: center; vertical-align: middle; }
     .status-icon { font-size: 1.25em; display: inline-block; }
-    .rules .pass { background: #f0fff4; }
-    .rules .pass .status-icon { color: #0a7; }
-    .rules .fail { background: #fff5f5; }
-    .rules .fail .status-icon { color: #c33; }
+    .rules .pass {
+      background: linear-gradient(90deg, #e7ffe7 60%, #f7fffA 100%);
+      border-left: 5px solid #1db700;
+    }
+    .rules .pass .status-icon {
+      color: #259d24;
+      font-weight: bold;
+      text-shadow: 0 1px 0 #b3ebc4, 0 0 4px #fff;
+      filter: drop-shadow(0 0 2px #9fdeaa);
+    }
+    .rules .fail {
+      background: linear-gradient(90deg, #fff1f3 60%, #fff9fa 100%);
+      border-left: 5px solid #d22c1b;
+    }
+    .rules .fail .status-icon {
+      color: #d22c1b;
+      font-weight: bold;
+      text-shadow: 0 1px 0 #ffd2d2, 0 0 4px #fff;
+      filter: drop-shadow(0 0 2px #efabaa);
+    }
     .detail { font-size: 0.9em; color: #666; }
   </style>
 </head>
