@@ -79,16 +79,18 @@ def _run_one(
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-    # For SQLite: source_table name; for CSV: None
-    source_table = source_config.get("source_table") if source_type.lower() == "sqlite" else None
+    # Populate from data_sources.json for validation_results table
+    source_id_val = source_config.get("source_id") or source_id
+    data_source_val = source_config.get("data_source") or source_type or "csv"
+    source_table_val = source_config.get("source_table") if source_type.lower() == "sqlite" else None
 
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
             data_source_name=rules_key,
-            source_id=source_id,
-            data_source=source_type,
-            source_table=source_table,
+            source_id=source_id_val,
+            data_source=data_source_val,
+            source_table=source_table_val,
             save_results=args.save_results,
         )
 

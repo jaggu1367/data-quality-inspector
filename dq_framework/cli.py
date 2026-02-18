@@ -3,6 +3,7 @@ Command-line interface for the Data Quality Framework
 """
 import argparse
 import json
+import os
 import sys
 from typing import Optional
 import pandas as pd
@@ -61,8 +62,43 @@ def list_rules(args):
             print()
 
 
+def _resolve_source_context(args, root: str) -> tuple[Optional[str], str, Optional[str]]:
+    """Resolve source_id, data_source, source_table from data_sources.json when possible."""
+    sources_config = os.path.join(root, "config", "data_sources.json")
+    if not os.path.isfile(sources_config):
+        return args.source_id, "csv", None
+    try:
+        with open(sources_config, encoding="utf-8") as f:
+            config = json.load(f)
+        sources = config.get("sources", []) or []
+        for s in sources:
+            if not isinstance(s, dict) or "source_id" not in s:
+                continue
+            if args.source_id and s.get("source_id") == args.source_id:
+                return (
+                    s.get("source_id"),
+                    s.get("data_source") or "csv",
+                    s.get("source_table"),
+                )
+            # Match by path when source_id not provided
+            if not args.source_id and s.get("data_source", "").lower() == "csv":
+                path = s.get("path", "")
+                full_path = os.path.abspath(path if os.path.isabs(path) else os.path.join(root, path))
+                file_abspath = os.path.abspath(args.file)
+                if os.path.normpath(file_abspath) == os.path.normpath(full_path):
+                    return (
+                        s.get("source_id"),
+                        s.get("data_source") or "csv",
+                        s.get("source_table"),
+                    )
+    except (json.JSONDecodeError, OSError):
+        pass
+    return args.source_id, "csv", None
+
+
 def validate_file(args):
     """Validate a CSV file against rules"""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     # Load CSV file
     try:
         df = pd.read_csv(args.file)
@@ -70,15 +106,14 @@ def validate_file(args):
     except Exception as e:
         print(f"Error loading file: {e}", file=sys.stderr)
         sys.exit(1)
-    
-    # Validate (CLI validates CSV files: data_source="csv", source_table=None)
+    source_id, data_source, source_table = _resolve_source_context(args, root)
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
             data_source_name=args.rules_table_name,
-            source_id=args.source_id,
-            data_source="csv",
-            source_table=None,
+            source_id=source_id,
+            data_source=data_source,
+            source_table=source_table,
             save_results=args.save_results
         )
         
