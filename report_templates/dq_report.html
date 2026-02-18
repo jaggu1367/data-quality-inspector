@@ -15,8 +15,8 @@
     th { background: #eee; font-weight: 600; width: 140px; }
     .layer { margin-bottom: 2rem; }
     .summary th { width: 140px; }
-    .status-passed { color: #0a7; font-weight: 600; }
-    .status-failed { color: #c33; font-weight: 600; }
+    .status-passed { color: #315e3b; font-weight: 600; }
+    .status-failed { color: #8b0000; font-weight: 600; }
     .rules th { min-width: 80px; }
     .rules .sno-cell { text-align: center; width: 40px; }
     .rules .status-col { text-align: center; width: 60px; }
@@ -24,20 +24,20 @@
     .status-icon { font-size: 1.25em; display: inline-block; }
     .rules .pass {
       background: linear-gradient(90deg, #e7ffe7 60%, #f7fffA 100%);
-      border-left: 5px solid #1db700;
+      border-left: 5px solid #315e3b;
     }
     .rules .pass .status-icon {
-      color: #259d24;
+      color: #125013; /* dark green */
       font-weight: bold;
       text-shadow: 0 1px 0 #b3ebc4, 0 0 4px #fff;
-      filter: drop-shadow(0 0 2px #9fdeaa);
+      filter: drop-shadow(0 0 2px #315e3b);
     }
     .rules .fail {
       background: linear-gradient(90deg, #fff1f3 60%, #fff9fa 100%);
-      border-left: 5px solid #d22c1b;
+      border-left: 5px solid #8b0000; /* dark red */
     }
     .rules .fail .status-icon {
-      color: #d22c1b;
+      color: #8b0000; /* dark red */
       font-weight: bold;
       text-shadow: 0 1px 0 #ffd2d2, 0 0 4px #fff;
       filter: drop-shadow(0 0 2px #efabaa);
