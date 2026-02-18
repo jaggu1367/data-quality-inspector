@@ -1,0 +1,133 @@
+"""
+Validation service: runs active data_quality_rules against data and persists to validation_results.
+"""
+
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+from sqlalchemy.orm import Session
+
+from dq_framework.core import db_manager
+from dq_framework.core.models import ValidationResult
+from dq_framework.expectations import ExpectationBuilder
+from dq_framework.repositories import ValidationResultRepository
+from dq_framework.services.rule_manager import RuleManager
+
+
+class DataQualityValidator:
+    """Runs all active rules from data_quality_rules against a dataset."""
+
+    def __init__(self, session: Optional[Session] = None):
+        self._session = session or db_manager.get_session()
+        self._own_session = session is None
+        self._rule_manager = RuleManager(session=self._session)
+        self._result_repo = ValidationResultRepository(self._session)
+        self._expectation_builder = ExpectationBuilder()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._own_session:
+            if exc_type:
+                self._session.rollback()
+            else:
+                self._session.commit()
+            self._session.close()
+
+    def validate_dataset(
+        self,
+        df: pd.DataFrame,
+        data_source_name: str,
+        batch_identifier: Optional[str] = None,
+        save_results: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Validate a dataset against all active rules for that data source.
+        """
+        rules = self._rule_manager.get_rules_by_data_source(
+            data_source_name, active_only=True
+        )
+
+        if not rules:
+            return {
+                "success": True,
+                "message": f"No active rules found for data source: {data_source_name}",
+                "results": {},
+                "summary": {"total_rules": 0, "passed": 0, "failed": 0},
+            }
+
+        validation_results = self._expectation_builder.validate_dataframe(df, rules)
+
+        if save_results:
+            self._result_repo.add_batch(
+                results_by_rule_name=validation_results,
+                rules=rules,
+                data_source_name=data_source_name,
+                batch_identifier=batch_identifier,
+            )
+            if self._own_session:
+                self._session.commit()
+
+        passed = sum(1 for r in validation_results.values() if r.get("success", False))
+        failed = len(validation_results) - passed
+
+        return {
+            "success": failed == 0,
+            "data_source_name": data_source_name,
+            "batch_identifier": batch_identifier,
+            "results": validation_results,
+            "summary": {
+                "total_rules": len(rules),
+                "passed": passed,
+                "failed": failed,
+            },
+        }
+
+    def validate_rule(
+        self,
+        df: pd.DataFrame,
+        rule_id: int,
+        batch_identifier: Optional[str] = None,
+        save_results: bool = True,
+    ) -> Dict[str, Any]:
+        """Validate a dataset against a single rule by id."""
+        rule = self._rule_manager.get_rule(rule_id)
+        if not rule:
+            return {"success": False, "error": f"Rule with ID {rule_id} not found"}
+        if not rule.is_active:
+            return {"success": False, "error": f"Rule {rule.rule_name} is not active"}
+
+        validation_results = self._expectation_builder.validate_dataframe(df, [rule])
+        result = validation_results.get(rule.rule_name, {})
+
+        if save_results:
+            self._result_repo.add(
+                rule_id=rule.id,
+                success=result.get("success", False),
+                data_source_name=rule.data_source_name,
+                result=result.get("result"),
+                exception_info=result.get("exception_info"),
+                batch_identifier=batch_identifier,
+            )
+            if self._own_session:
+                self._session.commit()
+
+        return {
+            "success": result.get("success", False),
+            "rule_id": rule_id,
+            "rule_name": rule.rule_name,
+            "result": result,
+            "batch_identifier": batch_identifier,
+        }
+
+    def get_validation_history(
+        self,
+        rule_id: Optional[int] = None,
+        data_source_name: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[ValidationResult]:
+        """Get validation history from validation_results table."""
+        return self._result_repo.find_history(
+            rule_id=rule_id, data_source_name=data_source_name, limit=limit
+        )

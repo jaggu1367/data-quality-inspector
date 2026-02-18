@@ -15,7 +15,6 @@ Usage (from project root):
   python scripts/run_expectations.py --all --save-results   # run all sources from config
   python scripts/run_expectations.py --data-source-name customers_csv --send-report  # email report
 """
-import json
 import sys
 import os
 import argparse
@@ -26,56 +25,14 @@ if _root not in sys.path:
     sys.path.insert(0, _root)
 
 import pandas as pd
-from sqlalchemy import create_engine
-from dq_framework.database import db_manager
-from dq_framework.validator import DataQualityValidator
-from dq_framework.email_report import load_reports_config, send_email_report
-from dq_framework.html_report import maybe_write_html_report
-from db_init import seed_data_quality_rules_if_empty
+from dq_framework.core import db_manager
+from dq_framework.data import load_data_from_source, load_sources_config
+from dq_framework.reports import load_reports_config, maybe_write_html_report, send_email_report
+from dq_framework.seeding import seed_data_quality_rules_if_empty
+from dq_framework.services import DataQualityValidator
 
 DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
 DEFAULT_REPORTS_CONFIG = "config/dq_report_config.json"
-
-
-def load_sources_config(config_path: str) -> dict:
-    """Load data sources configuration from JSON file."""
-    path = config_path if os.path.isabs(config_path) else os.path.join(_root, config_path)
-    if not os.path.isfile(path):
-        raise FileNotFoundError(f"Data sources config not found: {path}")
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-def load_data_from_source(source_config: dict, root_dir: str) -> tuple[pd.DataFrame, str]:
-    """
-    Load data from a source (csv or sqlite). Returns (DataFrame, rules_table).
-    rules_table: used for rule matching; uses rules_table if present, else data_source_name.
-    """
-    source_type = source_config.get("type", "csv").lower()
-    rules_table = source_config.get("rules_table") or source_config.get("data_source_name", "dataset")
-
-    if source_type == "csv":
-        path = source_config.get("path")
-        if not path:
-            raise ValueError("CSV source must have 'path'")
-        full_path = path if os.path.isabs(path) else os.path.join(root_dir, path)
-        if not os.path.isfile(full_path):
-            raise FileNotFoundError(f"CSV file not found: {full_path}")
-        df = pd.read_csv(full_path)
-        return df, rules_table
-
-    if source_type == "sqlite":
-        database = source_config.get("database")
-        table = source_config.get("table")
-        if not database or not table:
-            raise ValueError("SQLite source must have 'database' and 'table'")
-        db_path = database if os.path.isabs(database) else os.path.join(root_dir, database)
-        conn_str = f"sqlite:///{os.path.normpath(db_path).replace(os.sep, '/')}"
-        engine = create_engine(conn_str)
-        df = pd.read_sql_table(table, engine)
-        return df, rules_table
-
-    raise ValueError(f"Unknown source type: {source_type}. Expected 'csv' or 'sqlite'.")
 
 
 def _build_path_or_table(source_config: dict, root: str) -> str:
@@ -201,7 +158,7 @@ def main():
         seed_data_quality_rules_if_empty()
     print("   Database ready.")
 
-    config = load_sources_config(args.sources_config)
+    config = load_sources_config(args.sources_config, _root)
     sources_list = config.get("sources", [])
     sources_by_name = {s["data_source_name"]: s for s in sources_list if isinstance(s, dict) and "data_source_name" in s}
 

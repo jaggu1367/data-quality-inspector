@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 import numpy as np
 
-from dq_framework.database import DataQualityRule, ValidationResult
+from dq_framework.core.models import DataQualityRule, ValidationResult
 
 
 def _sanitize_for_json(obj: Any) -> Any:

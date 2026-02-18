@@ -15,4 +15,9 @@ setup(
         "pydantic-settings>=2.1.0",
     ],
     python_requires=">=3.8",
+    entry_points={
+        "console_scripts": [
+            "dq=dq_framework.cli:main",
+        ],
+    },
 )

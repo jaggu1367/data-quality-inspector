@@ -5,7 +5,7 @@ Repository for data_quality_rules table. Single responsibility: rule persistence
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 
-from dq_framework.database import DataQualityRule
+from dq_framework.core.models import DataQualityRule
 
 
 class RuleRepository:
