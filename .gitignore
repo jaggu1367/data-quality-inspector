@@ -55,3 +55,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Mailpit (local email testing)
+mailpit.exe

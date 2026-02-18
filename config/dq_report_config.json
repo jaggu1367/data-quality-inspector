@@ -1,13 +1,13 @@
 {
   "email": {
-    "enabled": false,
-    "smtp_host": "smtp.gmail.com",
-    "smtp_port": 587,
-    "use_tls": true,
+    "enabled": true,
+    "smtp_host": "localhost",
+    "smtp_port": 1025,
+    "use_tls": false,
     "username": "",
     "password": "",
-    "from_address": "",
-    "to_addresses": [],
+    "from_address": "dq-report@test.local",
+    "to_addresses": ["recipient@test.local"],
     "subject": "Data Quality Report: {data_source_name}"
   },
   "html": {
