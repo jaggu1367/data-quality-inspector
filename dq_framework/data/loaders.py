@@ -28,9 +28,9 @@ def load_data_from_source(
     Returns:
         Tuple of (DataFrame, rules_table) - rules_table is used for rule matching.
     """
-    source_type = source_config.get("type", "csv").lower()
+    source_type = source_config.get("data_source", "csv").lower()
     rules_table = source_config.get("rules_table") or source_config.get(
-        "data_source_name", "dataset"
+        "source_id", "dataset"
     )
 
     if source_type == "csv":
@@ -45,13 +45,13 @@ def load_data_from_source(
 
     if source_type == "sqlite":
         database = source_config.get("database")
-        table = source_config.get("table")
-        if not database or not table:
-            raise ValueError("SQLite source must have 'database' and 'table'")
+        source_table = source_config.get("source_table")
+        if not database or not source_table:
+            raise ValueError("SQLite source must have 'database' and 'source_table'")
         db_path = database if os.path.isabs(database) else os.path.join(root_dir, database)
         conn_str = f"sqlite:///{os.path.normpath(db_path).replace(os.sep, '/')}"
         engine = create_engine(conn_str)
-        df = pd.read_sql_table(table, engine)
+        df = pd.read_sql_table(source_table, engine)
         return df, rules_table
 
     raise ValueError(

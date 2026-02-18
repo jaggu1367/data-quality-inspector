@@ -33,7 +33,7 @@ def _build_layer1_html(source_info: Dict[str, Any]) -> str:
     <section class="layer">
       <h2>Input Data Source</h2>
       <table>
-        <tr><th>Data Source Name</th><td>{_escape_html(source_info.get('data_source_name', 'N/A'))}</td></tr>
+        <tr><th>Source ID</th><td>{_escape_html(source_info.get('source_id', 'N/A'))}</td></tr>
         <tr><th>Source Type</th><td>{_escape_html(source_info.get('source_type', 'N/A'))}</td></tr>
         <tr><th>Path/Table</th><td>{_escape_html(source_info.get('path_or_table', 'N/A'))}</td></tr>
         <tr><th>Row Count</th><td>{source_info.get('row_count', 0)}</td></tr>
@@ -64,7 +64,7 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
     failed = summary.get("failed", 0)
     overall = "PASSED" if dq_report.get("success", False) else "FAILED"
     status_class = "status-passed" if overall == "PASSED" else "status-failed"
-    data_source_name = source_info.get("data_source_name", "N/A")
+    source_id = source_info.get("source_id", "N/A")
 
     PASS_SYMBOL = "&#9989;"   # ✅
     FAIL_SYMBOL = "&#10060;"  # ❌
@@ -89,7 +89,7 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
         rows.append(
             f"        <tr class=\"{row_class}\">"
             f"<td class=\"sno-cell\">{sno}</td>"
-            f"<td>{_escape_html(data_source_name)}</td>"
+            f"<td>{_escape_html(source_id)}</td>"
             f"<td>{_escape_html(column)}</td>"
             f"<td>{_escape_html(rule_name)}</td>"
             f"<td>{detail_cell}</td>"
@@ -110,7 +110,7 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
       </table>
       <h3>Per-rule results</h3>
       <table class="rules">
-        <thead><tr><th>Sno</th><th>Data Source Name</th><th>Column</th><th>DQ Rule</th><th>Validation Details</th><th class=\"status-col\">Status</th></tr></thead>
+        <thead><tr><th>Sno</th><th>Source ID</th><th>Column</th><th>DQ Rule</th><th>Validation Details</th><th class=\"status-col\">Status</th></tr></thead>
         <tbody>
 {rows_html}
         </tbody>
@@ -137,7 +137,7 @@ def build_html_report(
     """Build full HTML report with both layers using template from report_templates."""
     layer1 = _build_layer1_html(source_info)
     layer2 = _build_layer2_html(dq_report, source_info)
-    dsn = _escape_html(source_info.get("data_source_name", "Data Quality Report"))
+    dsn = _escape_html(source_info.get("source_id", "Data Quality Report"))
     page_title = f"Data Quality Report: {dsn}"
     report_title = f"Data Quality Report: {dsn}"
     is_failed = not dq_report.get("success", False)
@@ -235,7 +235,7 @@ def maybe_write_html_report(
     output_dir = html_cfg.get("output_dir", "html_reports")
     out_path = output_dir if os.path.isabs(output_dir) else os.path.join(root, output_dir)
     template_path = html_cfg.get("template_file", DEFAULT_TEMPLATE_PATH)
-    dsn_safe = source_info.get("data_source_name", "report").replace("/", "_").replace("\\", "_")
+    dsn_safe = source_info.get("source_id", "report").replace("/", "_").replace("\\", "_")
     ts = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"{dsn_safe}_{ts}.html"
     full_path = os.path.join(out_path, filename)

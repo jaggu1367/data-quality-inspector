@@ -8,8 +8,8 @@ Rules are matched by `rules_table`. Both CSV and SQLite sources share the same r
 
 Each dataset should have its own JSON file named `{rules_table}.json`. The `rules_table` comes from `config/data_sources.json`—each source declares a `rules_table` that maps to the rules file.
 
-| data_sources.json | rules/ |
-|-------------------|--------|
+| data_sources.json (source_id, rules_table) | rules/ |
+|-------------------------------------------|--------|
 | `customers_csv` (rules_table: customers) | `customers.json` |
 | `customers_sqlite` (rules_table: customers) | `customers.json` |
 
@@ -26,7 +26,7 @@ Each JSON file should contain an array of rule objects. Each rule object should 
   "rule_name": "unique_customer_id",
   "expectation_type": "expect_column_values_to_be_unique",
   "kwargs": {"column": "customer_id"},
-  "data_source_name": "customers",
+  "rules_table_name": "customers",
   "column_name": "customer_id",
   "description": "customer_id unique"
 }
@@ -37,7 +37,7 @@ Each JSON file should contain an array of rule objects. Each rule object should 
 - `rule_name`: Unique identifier for the rule (must be unique across all datasets)
 - `expectation_type`: Great Expectations expectation type (e.g., `expect_column_values_to_be_unique`)
 - `kwargs`: Dictionary of parameters for the expectation (e.g., `{"column": "customer_id"}`)
-- `data_source_name`: Name of the data source (rules_table) this rule applies to
+- `rules_table_name`: Rules table (e.g. customers) this rule applies to
 
 ### Optional Fields
 
@@ -59,7 +59,7 @@ This script will:
 
 ## Adding Rules for a New Dataset
 
-1. Add a source with `rules_table` in `config/data_sources.json`
+1. Add a source with `rules_table` (and for SQLite: `database` + `source_table`) in `config/data_sources.json`
 2. Create `rules/{rules_table}.json` (e.g. copy from `customers.json` as a template)
 3. Edit the rules file to match your dataset schema
 4. Run `python scripts/seed_dq_rules.py` to load the rules into the database

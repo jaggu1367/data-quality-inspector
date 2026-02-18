@@ -22,7 +22,7 @@ def build_source_details_layer(source_info: Dict[str, Any]) -> str:
         "LAYER 1: INPUT DATA SOURCE",
         "=" * 50,
         "",
-        f"Data Source Name:  {source_info.get('data_source_name', 'N/A')}",
+        f"Source ID:         {source_info.get('source_id', 'N/A')}",
         f"Source Type:       {source_info.get('source_type', 'N/A')}",
         f"Path/Table:        {source_info.get('path_or_table', 'N/A')}",
         f"Row Count:         {source_info.get('row_count', 0)}",
@@ -109,9 +109,9 @@ def send_email_report(
     if not to_addresses:
         return False
 
-    subject_template = email_cfg.get("subject", "Data Quality Report: {data_source_name}")
+    subject_template = email_cfg.get("subject", "Data Quality Report: {source_id}")
     subject = subject_template.format(
-        data_source_name=source_info.get("data_source_name", "unknown")
+        source_id=source_info.get("source_id", "unknown")
     )
 
     html_cfg = config.get("html", {})

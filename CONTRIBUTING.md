@@ -37,7 +37,7 @@ Thank you for your interest in contributing to the Data Quality Framework!
 ```bash
 # Verify the framework works
 python scripts/seed_dq_rules.py
-python scripts/run_expectations.py --data-source-name customers_csv
+python scripts/run_expectations.py --source-id customers_csv
 ```
 
 ## Code Style

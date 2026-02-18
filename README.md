@@ -9,7 +9,7 @@
 | I want to… | Command |
 |------------|---------|
 | **First-time setup** | `pip install -r requirements.txt` → `python db_init.py` |
-| **Run validations** | `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results` |
+| **Run validations** | `python scripts/run_expectations.py --source-id customers_sqlite --save-results` |
 | **Validate all sources** | `python scripts/run_expectations.py --all --save-results` |
 | **List rules** | `python -m dq_framework.cli list-rules` |
 
@@ -91,7 +91,7 @@ A file `dq_framework.db` will appear in the project root—that’s your SQLite 
 The project includes sample data sources (SQLite tables and CSV files). Run validations against the `customers` table in SQLite:
 
 ```bash
-python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose
+python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
 ```
 
 You should see output similar to:
@@ -121,12 +121,12 @@ Data sources are defined in `config/data_sources.json`. The sample config includ
 | What you want to do | Command |
 |---------------------|---------|
 | One-time DB setup | `python db_init.py` |
-| Validate customers table (SQLite) | `python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose` |
-| Validate orders table (SQLite) | `python scripts/run_expectations.py --data-source-name orders_sqlite --save-results` |
-| Validate products table (SQLite) | `python scripts/run_expectations.py --data-source-name products_sqlite --save-results` |
+| Validate customers table (SQLite) | `python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose` |
+| Validate orders table (SQLite) | `python scripts/run_expectations.py --source-id orders_sqlite --save-results` |
+| Validate products table (SQLite) | `python scripts/run_expectations.py --source-id products_sqlite --save-results` |
 | Validate all configured sources | `python scripts/run_expectations.py --all --save-results` |
-| Load rules from JSON, then validate | `python scripts/run_expectations.py --data-source-name customers_sqlite --seed-dq-rules --save-results` |
-| Generate HTML/email report | `python scripts/run_expectations.py --data-source-name customers_sqlite --send-report` |
+| Load rules from JSON, then validate | `python scripts/run_expectations.py --source-id customers_sqlite --seed-dq-rules --save-results` |
+| Generate HTML/email report | `python scripts/run_expectations.py --source-id customers_sqlite --send-report` |
 
 > **Note:** For SQLite sources, ensure `data_store.db` and the required tables exist. Run `python scripts/load_csv_to_sqlite.py` first to populate the sample database from CSV files if needed.
 
@@ -148,9 +148,9 @@ DB_PATH=path/to/your/dq_framework.db
 
 Edit `config/data_sources.json` to define your data sources. Each source specifies:
 
-- `data_source_name` — unique identifier (e.g., `customers_sqlite`)
-- `type` — `csv` or `sqlite`
-- `path` (for CSV) or `database` + `table` (for SQLite, e.g. `data_store.db` and `customers`)
+- `source_id` — unique identifier (e.g., `customers_sqlite`)
+- `data_source` — `csv` or `sqlite`
+- `path` (for CSV) or `database` + `source_table` (for SQLite, e.g. `data_store.db` and `customers`)
 - `rules_table` — name used to look up rules (e.g., `customers` matches rules in `rules/customers.json`)
 
 ---
@@ -167,14 +167,14 @@ with RuleManager() as rm:
         rule_name="customer_id_not_null",
         expectation_type="expect_column_values_to_not_be_null",
         kwargs={"column": "customer_id"},
-        data_source_name="customers",
+        rules_table_name="customers",
         description="Ensure customer_id has no null values"
     )
     rm.create_rule(
         rule_name="status_valid",
         expectation_type="expect_column_values_to_be_in_set",
         kwargs={"column": "status", "value_set": ["active", "inactive", "pending"]},
-        data_source_name="customers",
+        rules_table_name="customers",
         description="Validate status values"
     )
 ```
@@ -193,15 +193,17 @@ df = pd.read_sql_table("customers", engine)
 with DataQualityValidator() as validator:
     result = validator.validate_dataset(
         df=df,
-        data_source_name="customers",
-        batch_identifier="batch_001",
+        rules_table_name="customers",
+        source_id="customers_sqlite",
+        data_source="sqlite",
+        source_table="customers",
         save_results=True
     )
     print(f"Validation: {'PASSED' if result['success'] else 'FAILED'}")
     print(f"Passed: {result['summary']['passed']}/{result['summary']['total_rules']}")
 ```
 
-> **Note:** Use `data_source_name` to match the rules; it corresponds to `rules_table` in `config/data_sources.json` or the JSON filename in `rules/` (e.g., `customers`).
+> **Note:** Use `rules_table_name` to match the rules; it corresponds to `rules_table` in `config/data_sources.json` or the JSON filename in `rules/` (e.g., `customers`).
 
 ---
 
@@ -228,7 +230,7 @@ python -m dq_framework.cli create-rule \
     --rule-name "email_not_null" \
     --expectation-type "expect_column_values_to_not_be_null" \
     --kwargs '{"column": "email"}' \
-    --data-source-name "users" \
+    --rules-table-name "users" \
     --description "Email must not be null"
 ```
 
@@ -244,7 +246,7 @@ python -m dq_framework.cli list-rules --active-only
 For SQLite tables (recommended), use `run_expectations.py`:
 
 ```bash
-python scripts/run_expectations.py --data-source-name customers_sqlite --save-results --verbose
+python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
 ```
 
 For CSV files, use the CLI:
@@ -252,8 +254,8 @@ For CSV files, use the CLI:
 ```bash
 python -m dq_framework.cli validate \
     --file data/sample_customers_100.csv \
-    --data-source-name "customers" \
-    --batch-id "batch_001" \
+    --rules-table-name "customers" \
+    --source-id "customers_csv" \
     --save-results \
     --verbose
 ```
@@ -295,7 +297,7 @@ You can open `dq_framework.db` with [DB Browser for SQLite](https://sqlitebrowse
 
 ```sql
 -- Active rules for a data source
-SELECT * FROM data_quality_rules WHERE data_source_name = 'customers' AND is_active = 1;
+SELECT * FROM data_quality_rules WHERE rules_table_name = 'customers' AND is_active = 1;
 
 -- Recent validation results
 SELECT rule_id, success, validation_timestamp FROM validation_results ORDER BY validation_timestamp DESC LIMIT 10;
@@ -324,8 +326,8 @@ Detailed column descriptions, relationships, and example queries are in [DATABAS
 from dq_framework.rule_manager import RuleManager
 
 with RuleManager() as rm:
-    rule = rm.create_rule(rule_name="...", expectation_type="...", kwargs={...}, data_source_name="...")
-    rules = rm.get_rules_by_data_source("customers")
+    rule = rm.create_rule(rule_name="...", expectation_type="...", kwargs={...}, rules_table_name="...")
+    rules = rm.get_rules_by_rules_table_name("customers")
     rule = rm.get_rule_by_name("rule_name")
     rm.update_rule(rule_id, kwargs={...})
     rm.deactivate_rule(rule_id)
@@ -338,9 +340,9 @@ with RuleManager() as rm:
 from dq_framework.validator import DataQualityValidator
 
 with DataQualityValidator() as validator:
-    result = validator.validate_dataset(df, data_source_name="customers")
+    result = validator.validate_dataset(df, data_source_name="customers")  # data_source_name = rules_table
     result = validator.validate_rule(df, rule_id=1)
-    history = validator.get_validation_history(data_source_name="customers")
+    history = validator.get_validation_history(rules_table_name="customers")
 ```
 
 ---

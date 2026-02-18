@@ -18,7 +18,7 @@ DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
 
 
 def get_dataset_names_from_sources(config_path: str) -> set[str] | None:
-    """Extract unique rules_table names (for rules files). Uses rules_table if present, else data_source_name."""
+    """Extract unique rules_table names (for rules files). Uses rules_table if present, else source_id."""
     path = config_path if os.path.isabs(config_path) else os.path.join(_root, config_path)
     if not os.path.isfile(path):
         return None
@@ -31,7 +31,7 @@ def get_dataset_names_from_sources(config_path: str) -> set[str] | None:
     for s in sources:
         if not isinstance(s, dict):
             continue
-        name = s.get("rules_table") or s.get("data_source_name")
+        name = s.get("rules_table") or s.get("source_id")
         if name:
             result.add(name)
     return result or None
@@ -83,9 +83,9 @@ def get_all_rules(rules_dir: str = "rules", dataset_names_filter: set[str] | Non
     
     for dataset_name, rules in rules_by_dataset.items():
         for rule in rules:
-            # Ensure data_source_name is set (use filename if not in JSON)
-            if "data_source_name" not in rule:
-                rule["data_source_name"] = dataset_name
+            # Ensure rules_table_name is set (support both keys for backward compat)
+            rules_table = rule.get("rules_table_name") or rule.get("data_source_name") or dataset_name
+            rule["rules_table_name"] = rules_table
             all_rules.append(rule)
     
     return all_rules
@@ -119,7 +119,7 @@ def seed_dq_rules(
         if replace_existing:
             if rules_table_filter:
                 deleted = session.query(DataQualityRule).filter(
-                    DataQualityRule.data_source_name.in_(rules_table_filter)
+                    DataQualityRule.rules_table_name.in_(rules_table_filter)
                 ).delete(synchronize_session=False)
                 session.commit()
                 print(f"  Cleared {deleted} existing rules for {rules_table_filter}.")
@@ -133,7 +133,7 @@ def seed_dq_rules(
         for r in all_rules:
             existing = session.query(DataQualityRule).filter(
                 DataQualityRule.rule_name == r["rule_name"],
-                DataQualityRule.data_source_name == r["data_source_name"],
+                DataQualityRule.rules_table_name == r["rules_table_name"],
             ).first()
             if existing:
                 existing.expectation_type = r["expectation_type"]
@@ -147,7 +147,7 @@ def seed_dq_rules(
                     rule_name=r["rule_name"],
                     expectation_type=r["expectation_type"],
                     kwargs=r["kwargs"],
-                    data_source_name=r["data_source_name"],
+                    rules_table_name=r["rules_table_name"],
                     column_name=r.get("column_name"),
                     description=r.get("description"),
                     is_active=True,
@@ -164,23 +164,23 @@ def seed_dq_rules(
 def main():
     import argparse
     ap = argparse.ArgumentParser(description="Seed data_quality_rules from rules/*.json")
-    ap.add_argument("--data-source-name", "-s", help="Only seed rules for this data source's rules_table")
+    ap.add_argument("--source-id", "-s", help="Only seed rules for this source ID from config/data_sources.json")
     ap.add_argument("--sources-config", default=DEFAULT_SOURCES_CONFIG, help="Path to data sources config")
     a = ap.parse_args()
     print("Seeding data quality rules from JSON files...")
     db_manager.create_tables()
     rules_filter = None
-    if a.data_source_name:
+    if a.source_id:
         path = a.sources_config if os.path.isabs(a.sources_config) else os.path.join(_root, a.sources_config)
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as f:
                 cfg = json.load(f)
             for s in cfg.get("sources", []):
-                if isinstance(s, dict) and s.get("data_source_name") == a.data_source_name:
-                    rules_filter = {s.get("rules_table") or s.get("data_source_name")}
+                if isinstance(s, dict) and s.get("source_id") == a.source_id:
+                    rules_filter = {s.get("rules_table") or s.get("source_id")}
                     break
         if not rules_filter:
-            print(f"  Warning: data_source_name '{a.data_source_name}' not found in config. Seeding all.")
+            print(f"  Warning: source_id '{a.source_id}' not found in config. Seeding all.")
     seed_dq_rules(
         replace_existing=True,
         sources_config=a.sources_config,

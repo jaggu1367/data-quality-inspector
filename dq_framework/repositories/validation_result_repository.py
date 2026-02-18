@@ -37,10 +37,12 @@ class ValidationResultRepository:
         self,
         rule_id: int,
         success: bool,
-        data_source_name: str,
+        rules_table_name: str,
         result: Optional[Dict[str, Any]] = None,
         exception_info: Optional[str] = None,
-        batch_identifier: Optional[str] = None,
+        source_id: Optional[str] = None,
+        data_source: Optional[str] = None,
+        source_table: Optional[str] = None,
         validation_timestamp: Optional[datetime] = None,
     ) -> ValidationResult:
         """Persist a single validation result."""
@@ -51,8 +53,10 @@ class ValidationResultRepository:
             success=success,
             result=sanitized_result,
             exception_info=exception_info,
-            data_source_name=data_source_name,
-            batch_identifier=batch_identifier,
+            rules_table_name=rules_table_name,
+            source_id=source_id,
+            data_source=data_source,
+            source_table=source_table,
         )
         self._session.add(vr)
         self._session.flush()
@@ -63,8 +67,10 @@ class ValidationResultRepository:
         self,
         results_by_rule_name: Dict[str, Any],
         rules: List[DataQualityRule],
-        data_source_name: str,
-        batch_identifier: Optional[str] = None,
+        rules_table_name: str,
+        source_id: Optional[str] = None,
+        data_source: Optional[str] = None,
+        source_table: Optional[str] = None,
     ) -> None:
         """Persist validation results for multiple rules."""
         for rule in rules:
@@ -72,22 +78,24 @@ class ValidationResultRepository:
             self.add(
                 rule_id=rule.id,
                 success=result.get("success", False),
-                data_source_name=data_source_name,
+                rules_table_name=rules_table_name,
                 result=result.get("result"),
                 exception_info=result.get("exception_info"),
-                batch_identifier=batch_identifier,
+                source_id=source_id,
+                data_source=data_source,
+                source_table=source_table,
             )
 
     def find_history(
         self,
         rule_id: Optional[int] = None,
-        data_source_name: Optional[str] = None,
+        rules_table_name: Optional[str] = None,
         limit: int = 100,
     ) -> List[ValidationResult]:
-        """Get validation history, optionally filtered by rule or data source."""
+        """Get validation history, optionally filtered by rule or rules_table."""
         query = self._session.query(ValidationResult)
         if rule_id is not None:
             query = query.filter(ValidationResult.rule_id == rule_id)
-        if data_source_name is not None:
-            query = query.filter(ValidationResult.data_source_name == data_source_name)
+        if rules_table_name is not None:
+            query = query.filter(ValidationResult.rules_table_name == rules_table_name)
         return query.order_by(ValidationResult.validation_timestamp.desc()).limit(limit).all()

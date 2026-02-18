@@ -1,7 +1,7 @@
 """
 Run all active data quality rules from the data_quality_rules table against a data source.
 
-Data can be loaded from a CSV file or a SQLite table. Use --data-source-name to specify
+Data can be loaded from a CSV file or a SQLite table. Use --source-id to specify
 a source defined in config/data_sources.json; the config declares whether each source
 is csv or sqlite.
 
@@ -9,11 +9,11 @@ Rules are read from the data_quality_rules table (active only). Results are opti
 saved to validation_results.
 
 Usage (from project root):
-  python scripts/run_expectations.py --data-source-name customers_csv --save-results
-  python scripts/run_expectations.py --data-source-name customers_sqlite --save-results
-  python scripts/run_expectations.py --data-source-name orders_csv
+  python scripts/run_expectations.py --source-id customers_csv --save-results
+  python scripts/run_expectations.py --source-id customers_sqlite --save-results
+  python scripts/run_expectations.py --source-id orders_csv
   python scripts/run_expectations.py --all --save-results   # run all sources from config
-  python scripts/run_expectations.py --data-source-name customers_csv --send-report  # email report
+  python scripts/run_expectations.py --source-id customers_csv --send-report  # email report
 """
 import sys
 import os
@@ -37,27 +37,27 @@ DEFAULT_REPORTS_CONFIG = "config/dq_report_config.json"
 
 def _build_path_or_table(source_config: dict, root: str) -> str:
     """Build path_or_table string for source config."""
-    st = source_config.get("type", "csv").lower()
+    st = source_config.get("data_source", "csv").lower()
     if st == "csv":
         p = source_config.get("path", "")
         return p if os.path.isabs(p) else os.path.join(root, p)
     if st == "sqlite":
         db = source_config.get("database", "")
-        tbl = source_config.get("table", "")
+        tbl = source_config.get("source_table", "")
         return f"{db}/{tbl}" if db and tbl else "N/A"
     return "N/A"
 
 
 def _run_one(
-    data_source_name: str,
+    source_id: str,
     source_config: dict,
     args: argparse.Namespace,
     root: str,
 ) -> tuple[bool, dict, dict]:
     """Run expectations for one source. Returns (success, source_info, result)."""
-    source_type = source_config.get("type", "csv")
+    source_type = source_config.get("data_source", "csv")
     print(f"\n{'='*60}")
-    print(f"Source: {data_source_name} ({source_type})")
+    print(f"Source: {source_id} ({source_type})")
     print("=" * 60)
     try:
         df, rules_key = load_data_from_source(source_config, root)
@@ -71,7 +71,7 @@ def _run_one(
     print(f"  Running active rules for '{rules_key}'...")
 
     source_info = {
-        "data_source_name": data_source_name,
+        "source_id": source_id,
         "source_type": source_type,
         "path_or_table": _build_path_or_table(source_config, root),
         "row_count": len(df),
@@ -79,12 +79,16 @@ def _run_one(
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-    batch_id = args.batch_id or (f"{data_source_name}" if args.all else None)
+    # For SQLite: source_table name; for CSV: None
+    source_table = source_config.get("source_table") if source_type.lower() == "sqlite" else None
+
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
             data_source_name=rules_key,
-            batch_identifier=batch_id,
+            source_id=source_id,
+            data_source=source_type,
+            source_table=source_table,
             save_results=args.save_results,
         )
 
@@ -112,9 +116,9 @@ def main():
         description="Run active data quality rules from data_quality_rules table against a data source (CSV or SQLite)"
     )
     parser.add_argument(
-        "--data-source-name",
+        "--source-id",
         "-s",
-        help="Name of the data source from config/data_sources.json (e.g. customers_csv, customers_sqlite)",
+        help="Source ID from config/data_sources.json (e.g. customers_csv, customers_sqlite)",
     )
     parser.add_argument(
         "--all",
@@ -128,16 +132,15 @@ def main():
         help=f"Path to data sources config (default: {DEFAULT_SOURCES_CONFIG})",
     )
     parser.add_argument("--dataset-name", default=None, help="Override rules_table from config (optional)")
-    parser.add_argument("--seed-dq-rules", action="store_true", help="Load rules from JSON before validation (only for --data-source-name when specified, else all)")
-    parser.add_argument("--batch-id", default=None, help="Optional batch identifier for validation_results")
+    parser.add_argument("--seed-dq-rules", action="store_true", help="Load rules from JSON before validation (only for --source-id when specified, else all)")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
     parser.add_argument("--send-report", action="store_true", help="Generate reports (email and/or HTML per config/dq_report_config.json)")
     parser.add_argument("--reports-config", default=DEFAULT_REPORTS_CONFIG, help=f"Path to reports config (default: {DEFAULT_REPORTS_CONFIG})")
     args = parser.parse_args()
 
-    if not args.all and not args.data_source_name:
-        parser.error("Either --data-source-name or --all is required")
+    if not args.all and not args.source_id:
+        parser.error("Either --source-id or --all is required")
 
     print("=" * 60)
     print("Data Quality: Run active rules from data_quality_rules")
@@ -150,8 +153,8 @@ def main():
         seed_cmd = [sys.executable, os.path.join(_root, "scripts", "seed_dq_rules.py")]
         if args.all:
             pass  # seed all rules when --all
-        elif args.data_source_name:
-            seed_cmd.extend(["--data-source-name", args.data_source_name])
+        elif args.source_id:
+            seed_cmd.extend(["--source-id", args.source_id])
             seed_cmd.extend(["--sources-config", args.sources_config])
         subprocess.run(seed_cmd, check=True, cwd=_root)
     else:
@@ -160,18 +163,18 @@ def main():
 
     config = load_sources_config(args.sources_config, _root)
     sources_list = config.get("sources", [])
-    sources_by_name = {s["data_source_name"]: s for s in sources_list if isinstance(s, dict) and "data_source_name" in s}
+    sources_by_id = {s["source_id"]: s for s in sources_list if isinstance(s, dict) and "source_id" in s}
 
     if args.all:
-        data_source_names = list(sources_by_name.keys())
-        if not data_source_names:
+        source_ids = list(sources_by_id.keys())
+        if not source_ids:
             print("\nError: No sources found in config.")
             sys.exit(1)
-        print(f"\nRunning expectations for {len(data_source_names)} source(s): {data_source_names}")
+        print(f"\nRunning expectations for {len(source_ids)} source(s): {source_ids}")
         exit_code = 0
-        for dsn in data_source_names:
-            source_config = sources_by_name[dsn]
-            success, source_info, result = _run_one(dsn, source_config, args, _root)
+        for source_id in source_ids:
+            source_config = sources_by_id[source_id]
+            success, source_info, result = _run_one(source_id, source_config, args, _root)
             if args.send_report and source_info and result:
                 try:
                     if send_email_report(source_info, result, args.reports_config, _root):
@@ -189,11 +192,11 @@ def main():
             print("=" * 60)
         sys.exit(0)
 
-    if args.data_source_name not in sources_by_name:
-        print(f"\nError: Unknown data source '{args.data_source_name}'. Available: {list(sources_by_name.keys())}")
+    if args.source_id not in sources_by_id:
+        print(f"\nError: Unknown source ID '{args.source_id}'. Available: {list(sources_by_id.keys())}")
         sys.exit(1)
 
-    success, source_info, result = _run_one(args.data_source_name, sources_by_name[args.data_source_name], args, _root)
+    success, source_info, result = _run_one(args.source_id, sources_by_id[args.source_id], args, _root)
     if args.send_report and source_info and result:
         try:
             if send_email_report(source_info, result, args.reports_config, _root):

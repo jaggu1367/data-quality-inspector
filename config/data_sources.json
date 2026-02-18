@@ -1,36 +1,36 @@
 {
   "sources": [
     {
-      "data_source_name": "customers_csv",
-      "type": "csv",
+      "source_id": "customers_csv",
+      "data_source": "csv",
       "path": "data/sample_customers_100.csv",
       "rules_table": "customers"
     },
     {
-      "data_source_name": "customers_sqlite",
-      "type": "sqlite",
+      "source_id": "customers_sqlite",
+      "data_source": "sqlite",
       "database": "data_store.db",
-      "table": "customers",
+      "source_table": "customers",
       "rules_table": "customers"
     },
     {
-      "data_source_name": "orders_csv",
-      "type": "csv",
+      "source_id": "orders_csv",
+      "data_source": "csv",
       "path": "data/orders.csv",
       "rules_table": "orders"
     },
     {
-      "data_source_name": "orders_sqlite",
-      "type": "sqlite",
+      "source_id": "orders_sqlite",
+      "data_source": "sqlite",
       "database": "data_store.db",
-      "table": "orders",
+      "source_table": "orders",
       "rules_table": "orders"
     },
     {
-      "data_source_name": "products_sqlite",
-      "type": "sqlite",
+      "source_id": "products_sqlite",
+      "data_source": "sqlite",
       "database": "data_store.db",
-      "table": "products",
+      "source_table": "products",
       "rules_table": "products"
     }
   ]

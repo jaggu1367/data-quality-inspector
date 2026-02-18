@@ -27,7 +27,7 @@ Stores the active rules used for validation. The framework runs all active rules
 | `rule_name` | VARCHAR(255) | UNIQUE, NOT NULL, INDEXED | Human-readable rule name (e.g., "customer_id_not_null") |
 | `expectation_type` | VARCHAR(255) | NOT NULL, INDEXED | Great Expectations expectation type |
 | `kwargs` | JSON/TEXT | NOT NULL | JSON object with expectation parameters |
-| `data_source_name` | VARCHAR(255) | NOT NULL, INDEXED | Data source (rules_table) this rule applies to |
+| `rules_table_name` | VARCHAR(255) | NOT NULL, INDEXED | Rules table (e.g. customers) this rule applies to |
 | `column_name` | VARCHAR(255) | NULLABLE | Optional column name (for convenience) |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | Whether rule is active |
 | `description` | TEXT | NULLABLE | Human-readable description |
@@ -40,7 +40,7 @@ Stores the active rules used for validation. The framework runs all active rules
 -- Get all active rules for a dataset
 SELECT rule_name, expectation_type, kwargs 
 FROM data_quality_rules 
-WHERE data_source_name = 'customers' AND is_active = 1;
+WHERE rules_table_name = 'customers' AND is_active = 1;
 ```
 
 ### 2. `validation_results`
@@ -57,8 +57,10 @@ Stores results of each validation execution, creating an audit trail.
 | `success` | BOOLEAN | NOT NULL, INDEXED | Pass (True) or fail (False) |
 | `result` | JSON/TEXT | NULLABLE | Complete GE result object as JSON |
 | `exception_info` | TEXT | NULLABLE | Error message if exception occurred |
-| `data_source_name` | VARCHAR(255) | NOT NULL, INDEXED | Data source that was validated |
-| `batch_identifier` | VARCHAR(255) | NULLABLE | Optional batch identifier |
+| `rules_table_name` | VARCHAR(255) | NOT NULL, INDEXED | Rules table (e.g. customers) that was validated |
+| `source_id` | VARCHAR(255) | NULLABLE, INDEXED | Source ID from config (e.g. customers_sqlite) |
+| `data_source` | VARCHAR(255) | NULLABLE | Source type: "csv" or "sqlite" |
+| `source_table` | VARCHAR(255) | NULLABLE | Table name for SQLite; null for CSV |
 
 #### Example Query
 
@@ -83,11 +85,12 @@ Automatically created indexes for performance:
 
 - `data_quality_rules.rule_name` (UNIQUE)
 - `data_quality_rules.expectation_type`
-- `data_quality_rules.data_source_name`
+- `data_quality_rules.rules_table_name`
 - `validation_results.rule_id`
 - `validation_results.validation_timestamp`
 - `validation_results.success`
-- `validation_results.data_source_name`
+- `validation_results.rules_table_name`
+- `validation_results.source_id`
 
 ## Common Operations
 

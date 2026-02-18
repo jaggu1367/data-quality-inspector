@@ -22,31 +22,31 @@ class RuleRepository:
         """Get a rule by unique rule_name."""
         return self._session.query(DataQualityRule).filter(DataQualityRule.rule_name == rule_name).first()
 
-    def find_active_by_data_source(self, data_source_name: str) -> List[DataQualityRule]:
-        """Get all active rules for a data source."""
+    def find_active_by_rules_table(self, rules_table_name: str) -> List[DataQualityRule]:
+        """Get all active rules for a rules table."""
         return (
             self._session.query(DataQualityRule)
             .filter(
-                DataQualityRule.data_source_name == data_source_name,
+                DataQualityRule.rules_table_name == rules_table_name,
                 DataQualityRule.is_active == True,
             )
             .all()
         )
 
-    def find_all_active(self, data_source_name: Optional[str] = None) -> List[DataQualityRule]:
-        """Get all active rules, optionally filtered by data source."""
+    def find_all_active(self, rules_table_name: Optional[str] = None) -> List[DataQualityRule]:
+        """Get all active rules, optionally filtered by rules table."""
         query = self._session.query(DataQualityRule).filter(DataQualityRule.is_active == True)
-        if data_source_name is not None:
-            query = query.filter(DataQualityRule.data_source_name == data_source_name)
+        if rules_table_name is not None:
+            query = query.filter(DataQualityRule.rules_table_name == rules_table_name)
         return query.all()
 
-    def find_all(self, data_source_name: Optional[str] = None, active_only: bool = False) -> List[DataQualityRule]:
-        """Get all rules, optionally filtered by data source and active status."""
+    def find_all(self, rules_table_name: Optional[str] = None, active_only: bool = False) -> List[DataQualityRule]:
+        """Get all rules, optionally filtered by rules table and active status."""
         query = self._session.query(DataQualityRule)
         if active_only:
             query = query.filter(DataQualityRule.is_active == True)
-        if data_source_name is not None:
-            query = query.filter(DataQualityRule.data_source_name == data_source_name)
+        if rules_table_name is not None:
+            query = query.filter(DataQualityRule.rules_table_name == rules_table_name)
         return query.all()
 
     def add(
@@ -54,7 +54,7 @@ class RuleRepository:
         rule_name: str,
         expectation_type: str,
         kwargs: Dict[str, Any],
-        data_source_name: str,
+        rules_table_name: str,
         column_name: Optional[str] = None,
         description: Optional[str] = None,
         is_active: bool = True,
@@ -64,7 +64,7 @@ class RuleRepository:
             rule_name=rule_name,
             expectation_type=expectation_type,
             kwargs=kwargs,
-            data_source_name=data_source_name,
+            rules_table_name=rules_table_name,
             column_name=column_name,
             description=description,
             is_active=is_active,
@@ -80,7 +80,7 @@ class RuleRepository:
         rule_name: Optional[str] = None,
         expectation_type: Optional[str] = None,
         kwargs: Optional[Dict[str, Any]] = None,
-        data_source_name: Optional[str] = None,
+        rules_table_name: Optional[str] = None,
         column_name: Optional[str] = None,
         description: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -95,8 +95,8 @@ class RuleRepository:
             rule.expectation_type = expectation_type
         if kwargs is not None:
             rule.kwargs = kwargs
-        if data_source_name is not None:
-            rule.data_source_name = data_source_name
+        if rules_table_name is not None:
+            rule.rules_table_name = rules_table_name
         if column_name is not None:
             rule.column_name = column_name
         if description is not None:

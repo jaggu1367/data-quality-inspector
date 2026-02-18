@@ -39,15 +39,17 @@ class DataQualityValidator:
         self,
         df: pd.DataFrame,
         data_source_name: str,
-        batch_identifier: Optional[str] = None,
+        source_id: Optional[str] = None,
+        data_source: Optional[str] = None,
+        source_table: Optional[str] = None,
         save_results: bool = True,
     ) -> Dict[str, Any]:
         """
         Validate a dataset against all active rules for that data source.
         """
-        rules = self._rule_manager.get_rules_by_data_source(
+        rules = self._rule_manager.get_rules_by_rules_table_name(
             data_source_name, active_only=True
-        )
+        )  # data_source_name param is the rules_table (e.g. "customers")
 
         if not rules:
             return {
@@ -63,8 +65,10 @@ class DataQualityValidator:
             self._result_repo.add_batch(
                 results_by_rule_name=validation_results,
                 rules=rules,
-                data_source_name=data_source_name,
-                batch_identifier=batch_identifier,
+                rules_table_name=data_source_name,
+                source_id=source_id,
+                data_source=data_source,
+                source_table=source_table,
             )
             if self._own_session:
                 self._session.commit()
@@ -74,8 +78,11 @@ class DataQualityValidator:
 
         return {
             "success": failed == 0,
+            "rules_table_name": data_source_name,
             "data_source_name": data_source_name,
-            "batch_identifier": batch_identifier,
+            "source_id": source_id,
+            "data_source": data_source,
+            "source_table": source_table,
             "results": validation_results,
             "summary": {
                 "total_rules": len(rules),
@@ -88,7 +95,9 @@ class DataQualityValidator:
         self,
         df: pd.DataFrame,
         rule_id: int,
-        batch_identifier: Optional[str] = None,
+        source_id: Optional[str] = None,
+        data_source: Optional[str] = None,
+        source_table: Optional[str] = None,
         save_results: bool = True,
     ) -> Dict[str, Any]:
         """Validate a dataset against a single rule by id."""
@@ -105,10 +114,12 @@ class DataQualityValidator:
             self._result_repo.add(
                 rule_id=rule.id,
                 success=result.get("success", False),
-                data_source_name=rule.data_source_name,
+                rules_table_name=rule.rules_table_name,
                 result=result.get("result"),
                 exception_info=result.get("exception_info"),
-                batch_identifier=batch_identifier,
+                source_id=source_id,
+                data_source=data_source,
+                source_table=source_table,
             )
             if self._own_session:
                 self._session.commit()
@@ -118,16 +129,20 @@ class DataQualityValidator:
             "rule_id": rule_id,
             "rule_name": rule.rule_name,
             "result": result,
-            "batch_identifier": batch_identifier,
+            "source_id": source_id,
+            "data_source": data_source,
+            "source_table": source_table,
         }
 
     def get_validation_history(
         self,
         rule_id: Optional[int] = None,
+        rules_table_name: Optional[str] = None,
         data_source_name: Optional[str] = None,
         limit: int = 100,
     ) -> List[ValidationResult]:
         """Get validation history from validation_results table."""
+        rules_table = rules_table_name or data_source_name
         return self._result_repo.find_history(
-            rule_id=rule_id, data_source_name=data_source_name, limit=limit
+            rule_id=rule_id, rules_table_name=rules_table, limit=limit
         )

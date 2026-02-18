@@ -7,8 +7,8 @@
     "username": "",
     "password": "",
     "from_address": "dq-report@test.local",
-    "to_addresses": ["recipient@test.local"],
-    "subject": "Data Quality Report: {data_source_name}"
+    "to_addresses": ["sharath@inteedo.com"],
+    "subject": "Data Quality Report: {source_id}"
   },
   "html": {
     "enabled": true,

@@ -34,7 +34,7 @@ class RuleManager:
         rule_name: str,
         expectation_type: str,
         kwargs: Dict[str, Any],
-        data_source_name: str,
+        rules_table_name: str,
         column_name: Optional[str] = None,
         description: Optional[str] = None,
         is_active: bool = True,
@@ -44,7 +44,7 @@ class RuleManager:
             rule_name=rule_name,
             expectation_type=expectation_type,
             kwargs=kwargs,
-            data_source_name=data_source_name,
+            rules_table_name=rules_table_name,
             column_name=column_name,
             description=description,
             is_active=is_active,
@@ -62,22 +62,22 @@ class RuleManager:
         """Get a rule by name."""
         return self._repo.find_by_name(rule_name)
 
-    def get_rules_by_data_source(
-        self, data_source_name: str, active_only: bool = True
+    def get_rules_by_rules_table_name(
+        self, rules_table_name: str, active_only: bool = True
     ) -> List[DataQualityRule]:
-        """Get all rules for a data source."""
+        """Get all rules for a rules table."""
         return self._repo.find_all(
-            data_source_name=data_source_name, active_only=active_only
+            rules_table_name=rules_table_name, active_only=active_only
         )
 
     def get_all_rules(
         self,
         active_only: bool = True,
-        data_source_name: Optional[str] = None,
+        rules_table_name: Optional[str] = None,
     ) -> List[DataQualityRule]:
         """Get all rules, optionally filtered."""
         return self._repo.find_all(
-            data_source_name=data_source_name, active_only=active_only
+            rules_table_name=rules_table_name, active_only=active_only
         )
 
     def update_rule(
@@ -86,7 +86,7 @@ class RuleManager:
         rule_name: Optional[str] = None,
         expectation_type: Optional[str] = None,
         kwargs: Optional[Dict[str, Any]] = None,
-        data_source_name: Optional[str] = None,
+        rules_table_name: Optional[str] = None,
         column_name: Optional[str] = None,
         description: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -97,7 +97,7 @@ class RuleManager:
             rule_name=rule_name,
             expectation_type=expectation_type,
             kwargs=kwargs,
-            data_source_name=data_source_name,
+            rules_table_name=rules_table_name,
             column_name=column_name,
             description=description,
             is_active=is_active,

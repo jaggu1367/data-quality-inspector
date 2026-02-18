@@ -20,7 +20,7 @@ class DataQualityRule(Base):
     rule_name = Column(String(255), nullable=False, unique=True, index=True)
     expectation_type = Column(String(255), nullable=False, index=True)
     kwargs = Column(JSON, nullable=False)
-    data_source_name = Column(String(255), nullable=False, index=True)
+    rules_table_name = Column(String(255), nullable=False, index=True)
     column_name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -53,8 +53,10 @@ class ValidationResult(Base):
     success = Column(Boolean, nullable=False, index=True)
     result = Column(JSON, nullable=True)
     exception_info = Column(Text, nullable=True)
-    data_source_name = Column(String(255), nullable=False, index=True)
-    batch_identifier = Column(String(255), nullable=True)
+    rules_table_name = Column(String(255), nullable=False, index=True)
+    source_id = Column(String(255), nullable=True, index=True)
+    data_source = Column(String(255), nullable=True)  # "csv" or "sqlite"
+    source_table = Column(String(255), nullable=True)  # table name for sqlite, null for csv
 
     rule = relationship("DataQualityRule", back_populates="validation_results")
 
