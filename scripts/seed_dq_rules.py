@@ -186,7 +186,7 @@ def main():
         sources_config=a.sources_config,
         rules_table_filter=rules_filter,
     )
-    print("Done. Run: python scripts/run_expectations.py --save-results")
+    print("Done.")
 
 
 if __name__ == "__main__":
