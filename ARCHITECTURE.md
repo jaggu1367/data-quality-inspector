@@ -60,10 +60,9 @@ from dq_framework.validator import DataQualityValidator
 
 ## Scripts
 
-- `db_init.py` - Initialize DB and seed default rules
-- `scripts/run_expectations.py` - Run validations against configured sources
+- `scripts/init_database.py` - Create database tables only (no rules seeded by default)
 - `scripts/seed_dq_rules.py` - Seed rules from JSON files
-- `scripts/init_database.py` - Create tables only
+- `scripts/run_expectations.py` - Run validations against configured sources
 - `scripts/load_csv_to_sqlite.py` - Load CSV into SQLite
 
 ## Entry Points

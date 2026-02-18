@@ -2,11 +2,12 @@
 
 > Validate your data with **Great Expectations** (v1.11.3) and store rules in a **SQLite** database—no separate database server needed.
 
-**First time here?** Run these four commands from the project root:
+**First time here?** Run these five commands from the project root:
 
 ```bash
 pip install -r requirements.txt
-python db_init.py
+python scripts/init_database.py
+python scripts/seed_dq_rules.py
 python scripts/load_csv_to_sqlite.py --all
 python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
 ```
@@ -17,7 +18,7 @@ For more detail and options, see [First-time setup](#first-time-setup) below.
 
 ## First-time setup
 
-Follow these steps from the **project root** (the folder that contains `dq_framework`, `scripts`, and `db_init.py`).
+Follow these steps from the **project root** (the folder that contains `dq_framework` and `scripts`).
 
 ### 1. Check Python
 
@@ -39,12 +40,20 @@ You're ready when this completes without errors.
 ### 3. Initialize the database
 
 ```bash
-python db_init.py
+python scripts/init_database.py
 ```
 
-You should see: *"Database tables created successfully."* A file `dq_framework.db` will appear in the project root—this stores your rules and validation history.
+You should see: *"Database tables created successfully!"* A file `dq_framework.db` will appear in the project root—this stores your rules and validation history.
 
-### 4. Load sample data (for SQLite sources)
+### 4. Seed data quality rules
+
+```bash
+python scripts/seed_dq_rules.py
+```
+
+This loads rules from `rules/*.json` into the database. No rules are seeded by default when you initialize the database.
+
+### 5. Load sample data (for SQLite sources)
 
 The sample config uses SQLite tables. Load CSV files into `data_store.db`:
 
@@ -62,7 +71,7 @@ The sample config uses SQLite tables. Load CSV files into `data_store.db`:
 
 **Options:** `-f/--file` path, `-t/--table` name, `--no-header`, `-d/--delimiter` (default `,`), `-e/--encoding` (default `utf-8`). Use `--all` or `-a` to load all sample CSVs at once.
 
-### 5. Run your first validation
+### 6. Run your first validation
 
 ```bash
 python scripts/run_expectations.py --source-id customers_sqlite --save-results --verbose
@@ -80,6 +89,7 @@ You should see validation results: *"Overall: PASSED (or FAILED)"* with rule-by-
 
 | I want to… | Command |
 |------------|---------|
+| **Seed rules from JSON** | `python scripts/seed_dq_rules.py` |
 | **Load all sample data into SQLite** | `python scripts/load_csv_to_sqlite.py --all` |
 | **Run validations** | `python scripts/run_expectations.py --source-id customers_sqlite --save-results` |
 | **Validate all sources** | `python scripts/run_expectations.py --all --save-results` |
@@ -212,7 +222,7 @@ All commands are run from the project root.
 ### Initialize the database (recommended before first use)
 
 ```bash
-python db_init.py
+python scripts/init_database.py
 ```
 
 Or:
@@ -220,6 +230,8 @@ Or:
 ```bash
 python -m dq_framework.cli init-db
 ```
+
+Then seed rules from JSON: `python scripts/seed_dq_rules.py`
 
 ### Create a rule
 
@@ -360,7 +372,6 @@ Full list and parameters: [Great Expectations Documentation](https://docs.greate
 
 ```
 data-quality-inspector/
-├── db_init.py              ← Run first: creates database and seeds default rules
 ├── dq_framework/           ← Main package
 │   ├── core/               ← Config, database models, connection
 │   ├── repositories/       ← Data access (rules, validation results)
@@ -374,15 +385,15 @@ data-quality-inspector/
 │   └── data_sources.json   ← Define SQLite tables and CSV data sources
 ├── rules/                  ← Rule definitions (JSON), e.g. customers.json
 ├── scripts/
-│   ├── run_expectations.py ← Main validation script (run rules against data sources)
+│   ├── init_database.py    ← Run first: creates database tables (no rules seeded)
 │   ├── seed_dq_rules.py    ← Load rules from JSON into database
-│   ├── init_database.py    ← Alternative to db_init.py (tables only)
+│   ├── run_expectations.py ← Main validation script (run rules against data sources)
 │   └── load_csv_to_sqlite.py   ← Load sample CSVs into data_store.db
 ├── data/                   ← Sample CSV files (loaded into data_store.db for SQLite sources)
 ├── requirements.txt
 ├── setup.py
 ├── .env.example            ← Copy to .env to customize DB_PATH
-├── dq_framework.db         ← Created when you run db_init.py
+├── dq_framework.db         ← Created when you run scripts/init_database.py
 ├── README.md
 └── DATABASE_SCHEMA.md      ← Full schema and query examples
 ```
@@ -393,9 +404,9 @@ data-quality-inspector/
 
 | Issue | What to try |
 |-------|-------------|
-| **No active rules found** | Run `python db_init.py` (Step 3 of [First-time setup](#first-time-setup)) |
-| **FileNotFoundError** (data file) | Run `python scripts/load_csv_to_sqlite.py --all` (Step 4 of [First-time setup](#first-time-setup)) to create `data_store.db` |
-| **ModuleNotFoundError: dq_framework** | Run all commands from the project root (the folder with `db_init.py`), or run `pip install -e .` |
+| **No active rules found** | Run `python scripts/seed_dq_rules.py` (Step 4 of [First-time setup](#first-time-setup)) |
+| **FileNotFoundError** (data file) | Run `python scripts/load_csv_to_sqlite.py --all` (Step 5 of [First-time setup](#first-time-setup)) to create `data_store.db` |
+| **ModuleNotFoundError: dq_framework** | Run all commands from the project root (the folder with `scripts/` and `dq_framework/`), or run `pip install -e .` |
 | **Unknown data source** | Check that the source name exists in `config/data_sources.json` |
 
 ---
