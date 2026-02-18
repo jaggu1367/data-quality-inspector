@@ -41,22 +41,32 @@ class DataQualityRule(Base):
 
 
 class ValidationResult(Base):
-    """Model for storing validation results."""
+    """Model for storing validation results.
+
+    Column order (audit → context → rule → outcome):
+      id, validation_timestamp, source_id, data_source, source_table,
+      rules_table_name, rule_id, success, result, exception_info
+    """
 
     __tablename__ = "validation_results"
 
+    # Identity
     id = Column(Integer, primary_key=True, index=True)
-    rule_id = Column(Integer, ForeignKey("data_quality_rules.id"), nullable=False, index=True)
+    # When (audit)
     validation_timestamp = Column(
         DateTime, default=lambda: datetime.now(), nullable=False, index=True
     )
-    success = Column(Boolean, nullable=False, index=True)
-    result = Column(JSON, nullable=True)
-    exception_info = Column(Text, nullable=True)
-    rules_table_name = Column(String(255), nullable=False, index=True)
+    # Context: what was validated
     source_id = Column(String(255), nullable=True, index=True)
     data_source = Column(String(255), nullable=True)  # "csv" or "sqlite"
     source_table = Column(String(255), nullable=True)  # table name for sqlite, null for csv
+    rules_table_name = Column(String(255), nullable=False, index=True)
+    # Rule reference
+    rule_id = Column(Integer, ForeignKey("data_quality_rules.id"), nullable=False, index=True)
+    # Outcome
+    success = Column(Boolean, nullable=False, index=True)
+    result = Column(JSON, nullable=True)
+    exception_info = Column(Text, nullable=True)
 
     rule = relationship("DataQualityRule", back_populates="validation_results")
 

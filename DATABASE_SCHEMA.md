@@ -45,22 +45,22 @@ WHERE rules_table_name = 'customers' AND is_active = 1;
 
 ### 2. `validation_results`
 
-Stores results of each validation execution, creating an audit trail.
+Stores results of each validation execution, creating an audit trail. Columns are ordered for readability: identity → when → context (source) → rule → outcome.
 
-#### Columns
+#### Columns (in table order)
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | INTEGER | PRIMARY KEY | Auto-incrementing unique identifier |
-| `rule_id` | INTEGER | NOT NULL, FOREIGN KEY, INDEXED | References `data_quality_rules.id` |
-| `validation_timestamp` | DATETIME | NOT NULL, INDEXED | When validation executed |
-| `success` | BOOLEAN | NOT NULL, INDEXED | Pass (True) or fail (False) |
-| `result` | JSON/TEXT | NULLABLE | Complete GE result object as JSON |
-| `exception_info` | TEXT | NULLABLE | Error message if exception occurred |
-| `rules_table_name` | VARCHAR(255) | NOT NULL, INDEXED | Rules table (e.g. customers) that was validated |
-| `source_id` | VARCHAR(255) | NULLABLE, INDEXED | Source ID from config (e.g. customers_sqlite) |
-| `data_source` | VARCHAR(255) | NULLABLE | Source type: "csv" or "sqlite" |
-| `source_table` | VARCHAR(255) | NULLABLE | Table name for SQLite; null for CSV |
+| # | Column | Type | Constraints | Description |
+|---|--------|------|-------------|-------------|
+| 1 | `id` | INTEGER | PRIMARY KEY | Auto-incrementing unique identifier |
+| 2 | `validation_timestamp` | DATETIME | NOT NULL, INDEXED | When validation executed |
+| 3 | `source_id` | VARCHAR(255) | NULLABLE, INDEXED | Source ID from config (e.g. customers_sqlite) |
+| 4 | `data_source` | VARCHAR(255) | NULLABLE | Source type: "csv" or "sqlite" |
+| 5 | `source_table` | VARCHAR(255) | NULLABLE | Table name for SQLite; null for CSV |
+| 6 | `rules_table_name` | VARCHAR(255) | NOT NULL, INDEXED | Rules table (e.g. customers) that was validated |
+| 7 | `rule_id` | INTEGER | NOT NULL, FOREIGN KEY, INDEXED | References `data_quality_rules.id` |
+| 8 | `success` | BOOLEAN | NOT NULL, INDEXED | Pass (True) or fail (False) |
+| 9 | `result` | JSON/TEXT | NULLABLE | Complete GE result object as JSON |
+| 10 | `exception_info` | TEXT | NULLABLE | Error message if exception occurred |
 
 #### Example Query
 

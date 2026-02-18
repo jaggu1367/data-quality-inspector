@@ -312,7 +312,7 @@ The framework uses two tables:
 | Table | Purpose |
 |-------|---------|
 | `data_quality_rules` | Rule definitions (name, expectation type, kwargs, data source, etc.) |
-| `validation_results` | One row per validation run (rule_id, success, timestamp, result JSON, etc.) |
+| `validation_results` | One row per validation run (columns: id, when, source context, rule_id, outcome) |
 
 Detailed column descriptions, relationships, and example queries are in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
