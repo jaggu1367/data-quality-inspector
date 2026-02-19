@@ -23,12 +23,22 @@ python scripts/seed_dq_rules.py
 
 **Step 4:** Load sample CSV data into SQLite  
 ```bash
+python scripts/load_csv_to_sqlite.py --source-id customers_sqlite
+```
+
+**Step 5:** Load all CSV files source data into SQLite  
+```bash
 python scripts/load_csv_to_sqlite.py --all
 ```
 
-**Step 5:** Run data quality expectations on the customers (SQLite) source  
+**Step 6:** Run data quality expectations on the customers (SQLite) source  
 ```bash
 python scripts/run_expectations.py --source-id customers_sqlite --save-results --send-report --verbose
+```
+
+**Step 7:** Run data quality expectations on all the sources
+```bash
+python scripts/run_expectations.py --all --save-results --send-report --verbose
 ```
 
 You should see validation results (PASSED or FAILED). Done.
