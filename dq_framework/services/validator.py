@@ -1,8 +1,10 @@
 """
 Validation service: runs active data_quality_rules against data and persists to validation_results.
+
+Supports both pandas and PySpark DataFrames.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -37,7 +39,7 @@ class DataQualityValidator:
 
     def validate_dataset(
         self,
-        df: pd.DataFrame,
+        df: Union[pd.DataFrame, Any],
         data_source_name: str,
         source_id: Optional[str] = None,
         data_source: Optional[str] = None,
@@ -93,7 +95,7 @@ class DataQualityValidator:
 
     def validate_rule(
         self,
-        df: pd.DataFrame,
+        df: Union[pd.DataFrame, Any],
         rule_id: int,
         source_id: Optional[str] = None,
         data_source: Optional[str] = None,

@@ -1,9 +1,11 @@
 """
 Builds Great Expectations expectations from database rules.
+
+Supports both pandas and PySpark DataFrames.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 
@@ -11,6 +13,15 @@ from dq_framework.core.models import DataQualityRule
 
 # Suppress redundant GE batch manager warning
 logging.getLogger("great_expectations.core.batch_manager").setLevel(logging.ERROR)
+
+
+def _is_spark_dataframe(obj) -> bool:
+    """Check if the object is a PySpark DataFrame."""
+    try:
+        from pyspark.sql import DataFrame as SparkDataFrame
+        return isinstance(obj, SparkDataFrame)
+    except ImportError:
+        return False
 
 
 class PandasDataset:
@@ -41,6 +52,60 @@ class PandasDataset:
             exp_impl = get_expectation_impl(expectation_type)
             config = ExpectationConfiguration(type=expectation_type, kwargs=kwargs)
             execution_engine = PandasExecutionEngine(batch_data_dict={"default": self.df})
+            validator = Validator(execution_engine=execution_engine)
+            result = validator.graph_validate(configurations=[config])[0]
+
+            return {
+                "success": result.success,
+                "result": result.result if hasattr(result, "result") else {},
+                "expectation_config": {
+                    "expectation_type": expectation_type,
+                    "kwargs": kwargs,
+                },
+                "exception_info": result.exception_info if hasattr(result, "exception_info") else None,
+            }
+        except Exception as e:
+            import traceback
+            return {
+                "success": False,
+                "result": None,
+                "expectation_config": {
+                    "expectation_type": expectation_type,
+                    "kwargs": kwargs,
+                },
+                "exception_info": f"{str(e)}\n{traceback.format_exc()}",
+            }
+
+
+class SparkDataset:
+    """
+    Wrapper class that provides Great Expectations expectation methods on PySpark DataFrames.
+    Uses SparkDFExecutionEngine for distributed validation.
+    """
+
+    def __init__(self, df):  # pyspark.sql.DataFrame
+        self.df = df
+
+    def __getattr__(self, name):
+        """Dynamically handle expectation method calls."""
+        if name.startswith("expect_"):
+            def expectation_wrapper(**kwargs):
+                return self._execute_expectation(name, **kwargs)
+            return expectation_wrapper
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+    def _execute_expectation(self, expectation_type: str, **kwargs) -> Dict[str, Any]:
+        """Execute an expectation using Great Expectations SparkDFExecutionEngine."""
+        try:
+            from great_expectations.expectations.registry import get_expectation_impl
+            from great_expectations.validator.validator import ExpectationConfiguration
+            from great_expectations.execution_engine import SparkDFExecutionEngine
+            from great_expectations.validator.validator import Validator
+
+            exp_impl = get_expectation_impl(expectation_type)
+            config = ExpectationConfiguration(type=expectation_type, kwargs=kwargs)
+            execution_engine = SparkDFExecutionEngine()
+            execution_engine.load_batch_data(batch_id="default", batch_data=self.df)
             validator = Validator(execution_engine=execution_engine)
             result = validator.graph_validate(configurations=[config])[0]
 
@@ -114,7 +179,9 @@ class ExpectationBuilder:
             "expect_compound_columns_to_be_unique": "expect_compound_columns_to_be_unique",
         }
 
-    def build_expectation(self, rule: DataQualityRule, dataset: PandasDataset) -> Dict[str, Any]:
+    def build_expectation(
+        self, rule: DataQualityRule, dataset: Union[PandasDataset, SparkDataset]
+    ) -> Dict[str, Any]:
         """Build and execute an expectation based on a rule."""
         expectation_type = rule.expectation_type
         kwargs = rule.kwargs.copy()
@@ -153,10 +220,13 @@ class ExpectationBuilder:
             }
 
     def validate_dataframe(
-        self, df: pd.DataFrame, rules: List[DataQualityRule]
+        self, df: Union[pd.DataFrame, Any], rules: List[DataQualityRule]
     ) -> Dict[str, Any]:
-        """Validate a pandas DataFrame against multiple rules."""
-        ge_dataset = PandasDataset(df)
+        """Validate a pandas or PySpark DataFrame against multiple rules."""
+        if _is_spark_dataframe(df):
+            ge_dataset = SparkDataset(df)
+        else:
+            ge_dataset = PandasDataset(df)
         results = {}
         for rule in rules:
             try:

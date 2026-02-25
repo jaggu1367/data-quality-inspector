@@ -24,7 +24,6 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
-import pandas as pd
 from dq_framework.core import db_manager
 from dq_framework.data import load_data_from_source, load_sources_config
 from dq_framework.reports import load_reports_config, maybe_write_html_report, send_email_report
@@ -45,7 +44,26 @@ def _build_path_or_table(source_config: dict, root: str) -> str:
         db = source_config.get("database", "")
         tbl = source_config.get("source_table", "")
         return f"{db}/{tbl}" if db and tbl else "N/A"
+    if st == "hive":
+        tbl = source_config.get("table") or source_config.get("source_table", "")
+        return tbl or "N/A"
     return "N/A"
+
+
+def _get_row_count(df) -> int:
+    """Get row count for pandas or Spark DataFrame."""
+    try:
+        from pyspark.sql import DataFrame as SparkDataFrame
+        if isinstance(df, SparkDataFrame):
+            return df.count()
+    except ImportError:
+        pass
+    return len(df)
+
+
+def _get_columns(df) -> list:
+    """Get column list for pandas or Spark DataFrame."""
+    return list(df.columns)
 
 
 def _run_one(
@@ -56,26 +74,29 @@ def _run_one(
 ) -> tuple[bool, dict, dict]:
     """Run expectations for one source. Returns (success, source_info, result)."""
     source_type = source_config.get("data_source", "csv")
+    engine = getattr(args, "engine", "pandas")
     print(f"\n{'='*60}")
-    print(f"Source: {source_id} ({source_type})")
+    print(f"Source: {source_id} ({source_type}, engine={engine})")
     print("=" * 60)
     try:
-        df, rules_key = load_data_from_source(source_config, root)
+        df, rules_key = load_data_from_source(source_config, root, engine=engine)
         if args.dataset_name and not args.all:
             rules_key = args.dataset_name
     except (FileNotFoundError, ValueError) as e:
         print(f"  Error: {e}")
         return False, {}, {}
 
-    print(f"  Rows: {len(df)}, Columns: {list(df.columns)}")
+    row_count = _get_row_count(df)
+    columns = _get_columns(df)
+    print(f"  Rows: {row_count}, Columns: {columns}")
     print(f"  Running active rules for '{rules_key}'...")
 
     source_info = {
         "source_id": source_id,
         "source_type": source_type,
         "path_or_table": _build_path_or_table(source_config, root),
-        "row_count": len(df),
-        "columns": list(df.columns),
+        "row_count": row_count,
+        "columns": columns,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -132,6 +153,12 @@ def main():
         "--sources-config",
         default=DEFAULT_SOURCES_CONFIG,
         help=f"Path to data sources config (default: {DEFAULT_SOURCES_CONFIG})",
+    )
+    parser.add_argument(
+        "--engine",
+        choices=["pandas", "spark"],
+        default="pandas",
+        help="Data loading engine: pandas (default) or spark (PySpark)",
     )
     parser.add_argument("--dataset-name", default=None, help="Override rules_table from config (optional)")
     parser.add_argument("--seed-dq-rules", action="store_true", help="Load rules from JSON before validation (only for --source-id when specified, else all)")

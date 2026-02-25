@@ -97,12 +97,20 @@ def _resolve_source_context(args, root: str) -> tuple[Optional[str], str, Option
 
 
 def validate_file(args):
-    """Validate a CSV file against rules"""
+    """Validate a CSV file (or other source) against rules."""
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    # Load CSV file
+    engine = getattr(args, "engine", "pandas")
     try:
-        df = pd.read_csv(args.file)
-        print(f"Loaded {len(df)} rows from {args.file}")
+        if engine == "spark":
+            from dq_framework.data import load_data_from_source
+            # For CLI validate, we support CSV path as a simple source config
+            source_config = {"data_source": "csv", "path": args.file, "rules_table": args.rules_table_name}
+            df, _ = load_data_from_source(source_config, root, engine="spark")
+            row_count = df.count()
+        else:
+            df = pd.read_csv(args.file)
+            row_count = len(df)
+        print(f"Loaded {row_count} rows from {args.file} (engine={engine})")
     except Exception as e:
         print(f"Error loading file: {e}", file=sys.stderr)
         sys.exit(1)
@@ -158,6 +166,7 @@ def main():
     # Validate command
     validate_parser = subparsers.add_parser('validate', help='Validate a CSV file')
     validate_parser.add_argument('--file', required=True, help='Path to CSV file')
+    validate_parser.add_argument('--engine', choices=['pandas', 'spark'], default='pandas', help='Data engine: pandas (default) or spark')
     validate_parser.add_argument('--rules-table-name', required=True, help='Rules table name to match rules (e.g. customers)')
     validate_parser.add_argument('--source-id', help='Source ID for validation_results (optional)')
     validate_parser.add_argument('--save-results', action='store_true', help='Save results to database')
