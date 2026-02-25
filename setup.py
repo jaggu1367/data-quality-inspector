@@ -10,7 +10,7 @@ setup(
         "great-expectations==1.11.3",
         "sqlalchemy>=2.0.23",
         "pandas>=2.1.4",
-        "pyspark>=3.4.0",
+        "pyspark>=3.4.0,<4",
         "python-dotenv>=1.0.0",
         "pydantic>=2.5.3",
         "pydantic-settings>=2.1.0",
