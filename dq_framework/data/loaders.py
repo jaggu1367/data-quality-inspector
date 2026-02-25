@@ -133,12 +133,42 @@ def _load_spark(
         if not database or not source_table:
             raise ValueError("SQLite source must have 'database' and 'source_table'")
         db_path = database if os.path.isabs(database) else os.path.join(root_dir, database)
-        # PySpark does not natively support SQLite; use pandas + convert
+        # PySpark does not natively support SQLite; use pandas + convert with explicit schema
+        # to avoid legacyInferArrayTypeFromFirstElement issues (PySpark/Java version mismatch)
         import pandas as pd
+        from pyspark.sql.types import (
+            StructType,
+            StructField,
+            StringType,
+            LongType,
+            DoubleType,
+            BooleanType,
+            TimestampType,
+        )
+
         conn_str = f"sqlite:///{os.path.normpath(db_path).replace(os.sep, '/')}"
         engine = create_engine(conn_str)
         pdf = pd.read_sql_table(source_table, engine)
-        df = spark.createDataFrame(pdf)
+        # Build explicit schema from pandas dtypes to avoid schema inference
+        type_map = {
+            "int8": LongType(),
+            "int16": LongType(),
+            "int32": LongType(),
+            "int64": LongType(),
+            "uint8": LongType(),
+            "uint16": LongType(),
+            "uint32": LongType(),
+            "float32": DoubleType(),
+            "float64": DoubleType(),
+            "bool": BooleanType(),
+            "datetime64[ns]": TimestampType(),
+        }
+        fields = []
+        for col_name, dtype in pdf.dtypes.items():
+            spark_type = type_map.get(str(dtype), StringType())
+            fields.append(StructField(col_name, spark_type, nullable=True))
+        schema = StructType(fields)
+        df = spark.createDataFrame(pdf, schema=schema)
         return df, rules_table
 
     if source_type == "hive":
