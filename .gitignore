@@ -48,6 +48,9 @@ great_expectations/
 *.db
 *.sqlite
 
+# Spark SQLite temp export (engine=spark with sqlite source)
+data/spark_sqlite_*.csv
+
 # Logs
 *.log
 logs/
