@@ -1,0 +1,11 @@
+{
+  "fields": [
+    {"name": "order_id", "type": "LongType"},
+    {"name": "customer_id", "type": "LongType"},
+    {"name": "product_id", "type": "LongType"},
+    {"name": "quantity", "type": "LongType"},
+    {"name": "amount", "type": "DoubleType"},
+    {"name": "order_date", "type": "StringType"},
+    {"name": "status", "type": "StringType"}
+  ]
+}

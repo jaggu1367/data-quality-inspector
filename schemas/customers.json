@@ -1,0 +1,8 @@
+{
+  "fields": [
+    {"name": "customer_id", "type": "LongType"},
+    {"name": "email", "type": "StringType"},
+    {"name": "status", "type": "StringType"},
+    {"name": "age", "type": "LongType"}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "fields": [
+    {"name": "product_id", "type": "LongType"},
+    {"name": "product_name", "type": "StringType"},
+    {"name": "category", "type": "StringType"},
+    {"name": "price", "type": "DoubleType"},
+    {"name": "stock_quantity", "type": "LongType"},
+    {"name": "status", "type": "StringType"}
+  ]
+}

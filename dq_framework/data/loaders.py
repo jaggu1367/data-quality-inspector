@@ -2,13 +2,16 @@
 Data source configuration and loading for CSV, SQLite, and Hive.
 
 Supports both pandas (default) and PySpark engines.
+Uses explicit schemas from schemas/ folder for Spark CSV loading.
 """
 
 import json
 import os
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 import pandas as pd
+
+from dq_framework.data.schema_loader import load_schema_for_rules_table
 
 if TYPE_CHECKING:
     from pyspark.sql import DataFrame as SparkDataFrame
@@ -118,13 +121,13 @@ def _load_spark(
         if not os.path.isfile(full_path):
             raise FileNotFoundError(f"CSV file not found: {full_path}")
         header = source_config.get("header", True)
-        infer_schema = source_config.get("infer_schema", True)
-        df = (
-            spark.read
-            .option("header", str(header).lower())
-            .option("inferSchema", str(infer_schema).lower())
-            .csv(full_path)
-        )
+        schema = load_schema_for_rules_table(rules_table, root_dir)
+        reader = spark.read.option("header", str(header).lower())
+        if schema is not None:
+            df = reader.csv(full_path, schema=schema)
+        else:
+            infer_schema = source_config.get("infer_schema", True)
+            df = reader.option("inferSchema", str(infer_schema).lower()).csv(full_path)
         return df, rules_table
 
     if source_type == "sqlite":
@@ -142,12 +145,16 @@ def _load_spark(
         os.makedirs(data_dir, exist_ok=True)
         csv_path = os.path.abspath(os.path.join(data_dir, f"spark_sqlite_{source_table}.csv"))
         pdf.to_csv(csv_path, index=False, header=True)
-        df = (
-            spark.read
-            .option("header", "true")
-            .option("inferSchema", "true")
-            .csv(csv_path)
-        )
+        schema = load_schema_for_rules_table(rules_table, root_dir)
+        if schema is not None:
+            df = spark.read.option("header", "true").csv(csv_path, schema=schema)
+        else:
+            df = (
+                spark.read
+                .option("header", "true")
+                .option("inferSchema", "true")
+                .csv(csv_path)
+            )
         df = df.cache()
         df.count()  # Force read
         return df, rules_table

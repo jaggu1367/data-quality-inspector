@@ -24,6 +24,41 @@ def _is_spark_dataframe(obj) -> bool:
         return False
 
 
+# Map Pandas/numpy type names to Spark type names for Great Expectations.
+# Rules are typically written for Pandas (int64, str, etc.); Spark expects
+# pyspark type names (LongType, StringType, etc.).
+PANDAS_TO_SPARK_TYPE_MAP = {
+    "int64": "LongType",
+    "int32": "IntegerType",
+    "integer": "IntegerType",
+    "int": "LongType",
+    "float64": "DoubleType",
+    "float32": "FloatType",
+    "float": "DoubleType",
+    "str": "StringType",
+    "string": "StringType",
+    "object": "StringType",
+    "bool": "BooleanType",
+    "boolean": "BooleanType",
+}
+
+
+def _map_kwargs_for_spark(expectation_type: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform rule kwargs from Pandas type names to Spark type names."""
+    out = dict(kwargs)
+    if expectation_type == "expect_column_values_to_be_in_type_list" and "type_list" in out:
+        type_list = out["type_list"]
+        if isinstance(type_list, list):
+            mapped = []
+            for t in type_list:
+                mapped.append(PANDAS_TO_SPARK_TYPE_MAP.get(str(t).lower(), t))
+            out["type_list"] = list(dict.fromkeys(mapped))  # dedupe preserving order
+    elif expectation_type == "expect_column_values_to_be_of_type" and "type_" in out:
+        t = out["type_"]
+        out["type_"] = PANDAS_TO_SPARK_TYPE_MAP.get(str(t).lower(), t)
+    return out
+
+
 class PandasDataset:
     """
     Wrapper class that provides Great Expectations expectation methods on pandas DataFrames.
@@ -102,10 +137,22 @@ class SparkDataset:
             from great_expectations.execution_engine import SparkDFExecutionEngine
             from great_expectations.validator.validator import Validator
 
+            # Spark DataFrames have no guaranteed row order. For order-dependent
+            # expectations, we must order by the column first.
+            order_expectations = (
+                "expect_column_values_to_be_increasing",
+                "expect_column_values_to_be_decreasing",
+            )
+            col = kwargs.get("column")
+            if expectation_type in order_expectations and col:
+                df_to_use = self.df.orderBy(col)
+            else:
+                df_to_use = self.df
+
             exp_impl = get_expectation_impl(expectation_type)
             config = ExpectationConfiguration(type=expectation_type, kwargs=kwargs)
             execution_engine = SparkDFExecutionEngine()
-            execution_engine.load_batch_data(batch_id="default", batch_data=self.df)
+            execution_engine.load_batch_data(batch_id="default", batch_data=df_to_use)
             validator = Validator(execution_engine=execution_engine)
             result = validator.graph_validate(configurations=[config])[0]
 
@@ -188,6 +235,10 @@ class ExpectationBuilder:
 
         if rule.column_name and "column" not in kwargs:
             kwargs["column"] = rule.column_name
+
+        # Map Pandas type names to Spark type names when using Spark
+        if isinstance(dataset, SparkDataset):
+            kwargs = _map_kwargs_for_spark(expectation_type, kwargs)
 
         method_name = self.supported_expectations.get(expectation_type, expectation_type)
 
