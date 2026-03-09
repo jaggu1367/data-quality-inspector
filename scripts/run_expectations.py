@@ -82,9 +82,28 @@ def _run_one(
         df, rules_key = load_data_from_source(source_config, root, engine=engine)
         if args.dataset_name and not args.all:
             rules_key = args.dataset_name
-    except (FileNotFoundError, ValueError) as e:
+    except Exception as e:
         print(f"  Error: {e}")
-        return False, {}, {}
+        # Return structured info so email/HTML reports can be sent for the failure
+        source_info = {
+            "source_id": source_id,
+            "source_type": source_type,
+            "path_or_table": _build_path_or_table(source_config, root),
+            "row_count": 0,
+            "columns": [],
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        result = {
+            "success": False,
+            "summary": {"total_rules": 0, "passed": 0, "failed": 0},
+            "results": {
+                "load_error": {
+                    "success": False,
+                    "exception_info": str(e),
+                }
+            },
+        }
+        return False, source_info, result
 
     row_count = _get_row_count(df)
     columns = _get_columns(df)
