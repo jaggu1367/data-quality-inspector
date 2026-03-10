@@ -302,7 +302,7 @@ def build_html_report(
     .rules .fail {{ background: #fff5f5; }}
     .rules .fail .status-icon {{ color: #c33; }}
     .detail {{ font-size: 0.9em; color: #666; }}
-    .rule-params-cell {{ font-size: 0.85em; color: #444; max-width: 220px; }}
+    .rule-params-cell {{ font-size: 0.85em; color: #444; white-space: nowrap; }}
     {_EXPAND_STYLES}
   </style>
 </head>
