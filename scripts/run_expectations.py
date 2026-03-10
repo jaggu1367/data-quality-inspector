@@ -14,10 +14,12 @@ Usage (from project root):
   python scripts/run_expectations.py --source-id orders_csv
   python scripts/run_expectations.py --all --save-results   # run all sources from config
   python scripts/run_expectations.py --source-id customers_csv --send-report  # email report
+  python scripts/run_expectations.py --source-id products_sqlite --log-results  # log results to console
 """
 import sys
 import os
 import argparse
+import json
 from datetime import datetime
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +68,40 @@ def _get_columns(df) -> list:
     return list(df.columns)
 
 
+def _log_validation_results_to_console(
+    source_id: str,
+    source_info: dict,
+    result: dict,
+) -> None:
+    """Log validation results to console in a format similar to validation_results table."""
+    print("\n  --- Validation Results (as logged to validation_results) ---")
+    print(f"  source_id: {source_info.get('source_id', source_id)}")
+    print(f"  data_source: {source_info.get('source_type', 'N/A')}")
+    print(f"  path_or_table: {source_info.get('path_or_table', 'N/A')}")
+    print(f"  rules_table: {result.get('rules_table_name', result.get('data_source_name', 'N/A'))}")
+    print(f"  timestamp: {source_info.get('timestamp', 'N/A')}")
+    print(f"  summary: {result['summary']['passed']}/{result['summary']['total_rules']} passed, {result['summary']['failed']} failed")
+    print("  ---")
+    for rule_name, rule_result in result["results"].items():
+        success = rule_result.get("success", False)
+        status = "PASS" if success else "FAIL"
+        exc = rule_result.get("exception_info") or ""
+        result_data = rule_result.get("result")
+        print(f"  [{status}] {rule_name}")
+        if not success and exc:
+            print(f"      exception_info: {exc}")
+        if result_data is not None:
+            # Truncate large result payloads for console
+            try:
+                s = json.dumps(result_data, default=str)
+                if len(s) > 200:
+                    s = s[:200] + "..."
+                print(f"      result: {s}")
+            except (TypeError, ValueError):
+                print(f"      result: {str(result_data)[:200]}")
+    print("  ---")
+
+
 def _run_one(
     source_id: str,
     source_config: dict,
@@ -95,6 +131,7 @@ def _run_one(
         }
         result = {
             "success": False,
+            "rules_table_name": source_config.get("rules_table", "N/A"),
             "summary": {"total_rules": 0, "passed": 0, "failed": 0},
             "results": {
                 "load_error": {
@@ -103,6 +140,8 @@ def _run_one(
                 }
             },
         }
+        if getattr(args, "log_results", False):
+            _log_validation_results_to_console(source_id, source_info, result)
         return False, source_info, result
 
     row_count = _get_row_count(df)
@@ -150,6 +189,9 @@ def _run_one(
             if not ok and rule_result.get("exception_info"):
                 print(f"        Error: {(rule_result['exception_info'] or '')[:150]}")
 
+    if getattr(args, "log_results", False):
+        _log_validation_results_to_console(source_id, source_info, result)
+
     return result["success"], source_info, result
 
 
@@ -182,6 +224,7 @@ def main():
     parser.add_argument("--dataset-name", default=None, help="Override rules_table from config (optional)")
     parser.add_argument("--seed-dq-rules", action="store_true", help="Load rules from JSON before validation (only for --source-id when specified, else all)")
     parser.add_argument("--save-results", action="store_true", help="Save validation results to the database")
+    parser.add_argument("--log-results", action="store_true", help="Log validation results to console (same structure as validation_results table)")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print per-expectation details")
     parser.add_argument("--send-report", action="store_true", help="Generate reports (email and/or HTML per config/dq_report_config.json)")
     parser.add_argument("--reports-config", default=DEFAULT_REPORTS_CONFIG, help=f"Path to reports config (default: {DEFAULT_REPORTS_CONFIG})")
