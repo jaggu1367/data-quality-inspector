@@ -1,5 +1,7 @@
 # Spark vs Pandas Validation Analysis: products_sqlite
 
+> **See also:** [SPARK_VS_PANDAS_INVESTIGATION_REPORT.md](SPARK_VS_PANDAS_INVESTIGATION_REPORT.md) for the full investigation, remediation attempts, and final recommendations.
+
 ## Summary
 
 | Engine | Result | Passed | Failed |
@@ -80,15 +82,9 @@ The data itself is equivalent. The failures occur during **metric computation** 
 
 ## Recommendations
 
-### 1. Downgrade PySpark (Quick Fix)
+### 1. ~~Downgrade PySpark~~ (Attempted — Does Not Fix)
 
-Pin PySpark to a version known to work with GE 1.11.3:
-
-```txt
-pyspark>=3.4.0,<3.5
-```
-
-Or try PySpark 3.4.x specifically.
+Downgrading to PySpark 3.4.x was attempted with Python 3.12. The same `drop()` error persists. The issue is in Great Expectations, not PySpark version. See [SPARK_VS_PANDAS_INVESTIGATION_REPORT.md](SPARK_VS_PANDAS_INVESTIGATION_REPORT.md).
 
 ### 2. Upgrade Great Expectations
 
@@ -120,6 +116,6 @@ The Spark vs Pandas discrepancy is **not** due to:
 
 It **is** due to:
 - **Great Expectations 1.11.3** using `df.drop(Column)` in its Spark map-metric code
-- **PySpark 3.5.8** exposing a different Java `drop` signature that no longer accepts that call pattern
+- The PySpark/Java `drop` method rejecting this call pattern (confirmed in both PySpark 3.4.4 and 3.5.8)
 
-**Recommended action:** Use `--engine pandas` for SQLite sources, or downgrade PySpark to 3.4.x until GE is updated for PySpark 3.5 compatibility.
+**Recommended action:** Use `--engine pandas` for SQLite sources until Great Expectations fixes the Spark `drop()` usage in its map-metric code.
