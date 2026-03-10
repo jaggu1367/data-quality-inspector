@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from typing import Any, Dict, Optional
 
 from dq_framework.reports.config import load_reports_config
-from dq_framework.reports.html_report import build_html_report
+from dq_framework.reports.html_report import build_html_report, _format_rule_params
 
 
 def build_source_details_layer(source_info: Dict[str, Any]) -> str:
@@ -58,7 +58,9 @@ def build_dq_report_layer(dq_report: Dict[str, Any]) -> str:
     for rule_name, rule_result in dq_report.get("results", {}).items():
         ok = rule_result.get("success", False)
         status = "PASS" if ok else "FAIL"
-        lines.append(f"  [{status}] {rule_name}")
+        rule_params = _format_rule_params(rule_result)
+        params_str = f" ({rule_params})" if rule_params else ""
+        lines.append(f"  {rule_name} [{status}]{params_str}")
         if not ok:
             exc = rule_result.get("exception_info")
             if exc:

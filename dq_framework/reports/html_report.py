@@ -14,6 +14,39 @@ from dq_framework.reports.config import load_reports_config
 
 DEFAULT_TEMPLATE_PATH = "report_templates/dq_report.html"
 
+# CSS and JS for collapsible Validation Details (+ / - toggle with animated magnified box)
+_EXPAND_STYLES = """
+    .expand-btn { font-size: 1.1em; font-weight: bold; width: 1.8em; height: 1.8em; padding: 0; margin-right: 0.25rem; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; line-height: 1; vertical-align: middle; transition: background 0.2s, transform 0.2s; }
+    .expand-btn:hover { background: #e8f4fc; transform: scale(1.05); }
+    .expand-btn.expanded { background: #e0e0e0; }
+    .result-json-wrapper { max-height: 0; overflow: hidden; opacity: 0; transform: scale(0.92); transform-origin: top left; transition: max-height 0.35s ease-out, opacity 0.3s ease, transform 0.35s ease-out; }
+    .result-json-wrapper.expanded { max-height: 20em; opacity: 1; transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-radius: 6px; }
+    .result-json { font-size: 0.82em; background: #f8f9fa; padding: 0.6rem; border-radius: 4px; overflow-x: auto; max-height: 18em; overflow-y: auto; margin: 0.35rem 0 0 0; white-space: pre-wrap; word-break: break-word; border: 1px solid #e0e0e0; }
+"""
+
+_EXPAND_SCRIPT = """
+<script>
+function toggleValidationDetail(btn) {
+  var wrapper = btn.nextElementSibling;
+  if (!wrapper || !wrapper.classList) return;
+  var isExpanded = wrapper.classList.contains('expanded');
+  if (isExpanded) {
+    wrapper.classList.remove('expanded');
+    btn.classList.remove('expanded');
+    btn.textContent = '+';
+    btn.setAttribute('aria-label', 'Expand');
+    btn.setAttribute('title', 'Click to expand');
+  } else {
+    wrapper.classList.add('expanded');
+    btn.classList.add('expanded');
+    btn.textContent = '-';
+    btn.setAttribute('aria-label', 'Collapse');
+    btn.setAttribute('title', 'Click to collapse');
+  }
+}
+</script>
+"""
+
 
 def _escape_html(text: str) -> str:
     """Escape HTML special characters."""
@@ -57,6 +90,69 @@ def _extract_column(rule_result: Dict[str, Any]) -> str:
     return "N/A"
 
 
+def _format_value(val: Any) -> str:
+    """Format a single value for display (no truncation)."""
+    if isinstance(val, (list, tuple)):
+        return "[" + ", ".join(_format_value(v) for v in val) + "]"
+    if isinstance(val, dict):
+        return json.dumps(val, default=str)
+    return str(val)
+
+
+def _format_rule_params(rule_result: Dict[str, Any]) -> str:
+    """Format rule kwargs as human-readable string for reports (full values, no shorthand)."""
+    cfg = rule_result.get("expectation_config") or {}
+    if not cfg and rule_result.get("result") and isinstance(rule_result["result"], dict):
+        cfg = rule_result["result"].get("expectation_config") or {}
+    kwargs = cfg.get("kwargs") or {}
+    if not kwargs:
+        return ""
+    parts = []
+    handled = set()
+    # Order: min/max, column, value_set, regex, regex_list, column_set, column_list, type_list, type_, like_pattern
+    if "min_value" in kwargs and "max_value" in kwargs:
+        parts.append(f"min_value: {kwargs['min_value']}, max_value: {kwargs['max_value']}")
+        handled.update(["min_value", "max_value"])
+    elif "min_value" in kwargs:
+        parts.append(f"min_value: {kwargs['min_value']}")
+        handled.add("min_value")
+    elif "max_value" in kwargs:
+        parts.append(f"max_value: {kwargs['max_value']}")
+        handled.add("max_value")
+    if "column" in kwargs:
+        parts.append(f"column: {kwargs['column']}")
+        handled.add("column")
+    if "value_set" in kwargs:
+        parts.append(f"value_set: {_format_value(kwargs['value_set'])}")
+        handled.add("value_set")
+    if "regex" in kwargs:
+        parts.append(f"regex: {_format_value(kwargs['regex'])}")
+        handled.add("regex")
+    if "regex_list" in kwargs:
+        parts.append(f"regex_list: {_format_value(kwargs['regex_list'])}")
+        handled.add("regex_list")
+    if "column_set" in kwargs:
+        parts.append(f"column_set: {_format_value(kwargs['column_set'])}")
+        handled.add("column_set")
+    if "column_list" in kwargs:
+        parts.append(f"column_list: {_format_value(kwargs['column_list'])}")
+        handled.add("column_list")
+    if "type_list" in kwargs:
+        parts.append(f"type_list: {_format_value(kwargs['type_list'])}")
+        handled.add("type_list")
+    if "type_" in kwargs:
+        parts.append(f"type_: {kwargs['type_']}")
+        handled.add("type_")
+    if "like_pattern" in kwargs:
+        parts.append(f"like_pattern: {_format_value(kwargs['like_pattern'])}")
+        handled.add("like_pattern")
+    skip = {"catch_exceptions"}
+    for k, v in kwargs.items():
+        if k not in skip and k not in handled:
+            parts.append(f"{k}: {_format_value(v)}")
+    return "; ".join(parts) if parts else ""
+
+
 def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -> str:
     """Data quality report as HTML."""
     summary = dq_report.get("summary", {})
@@ -76,7 +172,9 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
         title = "Pass" if ok else "Fail"
         row_class = "pass" if ok else "fail"
         column = _extract_column(rule_result)
+        rule_params = _format_rule_params(rule_result)
         # Build Validation Details: full result JSON (same as validation_results.result column)
+        # Collapsible with + / - toggle; animated magnified box on expand
         result_json = rule_result.get("result")
         detail_parts = []
         if not ok:
@@ -86,23 +184,31 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
         if result_json is not None:
             try:
                 json_str = json.dumps(result_json, indent=2, default=str)
-                detail_parts.append(f'<pre class="result-json">{_escape_html(json_str)}</pre>')
+                detail_parts.append(
+                    '<button type="button" class="expand-btn collapsed" onclick="toggleValidationDetail(this)" '
+                    'aria-label="Expand" title="Click to expand">+</button>'
+                    '<div class="result-json-wrapper collapsed">'
+                    f'<pre class="result-json">{_escape_html(json_str)}</pre>'
+                    '</div>'
+                )
             except (TypeError, ValueError):
                 detail_parts.append(_escape_html(str(result_json)[:500]))
         detail = "<br>".join(detail_parts) if detail_parts else ""
         detail_cell = f'<span class="detail">{detail}</span>' if detail else ""
+        rule_params_cell = _escape_html(rule_params) if rule_params else ""
         rows.append(
             f"        <tr class=\"{row_class}\">"
             f"<td class=\"sno-cell\">{sno}</td>"
             f"<td>{_escape_html(source_id)}</td>"
             f"<td>{_escape_html(column)}</td>"
             f"<td>{_escape_html(rule_name)}</td>"
-            f"<td>{detail_cell}</td>"
             f"<td class=\"status-cell\"><span class=\"status-icon\" title=\"{title}\">{symbol}</span></td>"
+            f"<td class=\"rule-params-cell\">{rule_params_cell}</td>"
+            f"<td>{detail_cell}</td>"
             f"</tr>"
         )
 
-    rows_html = "\n".join(rows) if rows else "        <tr><td colspan=\"6\">No rules executed.</td></tr>"
+    rows_html = "\n".join(rows) if rows else "        <tr><td colspan=\"7\">No rules executed.</td></tr>"
 
     return f"""
     <section class="layer">
@@ -115,7 +221,7 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
       </table>
       <h3>Per-rule results</h3>
       <table class="rules">
-        <thead><tr><th>Sno</th><th>Source ID</th><th>Column</th><th>DQ Rule</th><th>Validation Details</th><th class=\"status-col\">Status</th></tr></thead>
+        <thead><tr><th>Sno</th><th>Source ID</th><th>Column</th><th>DQ Rule</th><th class=\"status-col\">Status</th><th>Rule Details</th><th>Validation Details</th></tr></thead>
         <tbody>
 {rows_html}
         </tbody>
@@ -156,11 +262,15 @@ def build_html_report(
     root = root_dir or os.getcwd()
     template = _load_report_template(root, template_path)
     if template:
-        return template.replace("{{page_title}}", page_title).replace(
-            "{{report_title}}", report_title
-        ).replace("{{failure_banner}}", failure_banner).replace(
-            "{{layer1_html}}", layer1
-        ).replace("{{layer2_html}}", layer2)
+        return (
+            template.replace("{{page_title}}", page_title)
+            .replace("{{report_title}}", report_title)
+            .replace("{{failure_banner}}", failure_banner)
+            .replace("{{layer1_html}}", layer1)
+            .replace("{{layer2_html}}", layer2)
+            .replace("{{expand_styles}}", _EXPAND_STYLES)
+            .replace("{{expand_script}}", _EXPAND_SCRIPT)
+        )
 
     # Fallback: inline HTML
     return f"""<!DOCTYPE html>
@@ -192,7 +302,8 @@ def build_html_report(
     .rules .fail {{ background: #fff5f5; }}
     .rules .fail .status-icon {{ color: #c33; }}
     .detail {{ font-size: 0.9em; color: #666; }}
-    .result-json {{ font-size: 0.8em; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; overflow-x: auto; max-height: 12em; overflow-y: auto; margin: 0.25rem 0; white-space: pre-wrap; word-break: break-word; }}
+    .rule-params-cell {{ font-size: 0.85em; color: #444; max-width: 220px; }}
+    {_EXPAND_STYLES}
   </style>
 </head>
 <body>
@@ -200,6 +311,7 @@ def build_html_report(
   <h1>{report_title}</h1>
 {layer1}
 {layer2}
+{_EXPAND_SCRIPT}
 </body>
 </html>"""
 

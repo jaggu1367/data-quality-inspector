@@ -43,7 +43,8 @@
       filter: drop-shadow(0 0 2px #efabaa);
     }
     .detail { font-size: 0.9em; color: #666; }
-    .result-json { font-size: 0.8em; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; overflow-x: auto; max-height: 12em; overflow-y: auto; margin: 0.25rem 0; white-space: pre-wrap; word-break: break-word; }
+    .rule-params-cell { font-size: 0.85em; color: #444; max-width: 220px; }
+    {{expand_styles}}
   </style>
 </head>
 <body>
@@ -51,5 +52,6 @@
   <h1>{{report_title}}</h1>
 {{layer1_html}}
 {{layer2_html}}
+{{expand_script}}
 </body>
 </html>
