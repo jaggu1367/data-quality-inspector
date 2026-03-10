@@ -10,7 +10,11 @@
 
 Validations for `products_sqlite` pass with the **pandas** engine (28/28 rules) but fail with the **spark** engine (15/28 passed, 13 failed). This report documents the investigation from the beginning, all remediation attempts, and final findings.
 
-**Conclusion:** The discrepancy is caused by a **Great Expectations (GE) bug** in its Spark execution path. The issue is **not** fixable by downgrading PySpark or changing Python versions. Use `--engine pandas` for SQLite sources until GE is updated.
+**Conclusion:** The discrepancy is caused by a **Great Expectations (GE) bug** in its Spark execution path. The issue is **not** fixable by downgrading PySpark or changing Python versions.
+
+**Resolution (March 2026):** A runtime patch was added in `dq_framework/ge_spark_patch.py` that fixes the GE bug by replacing `df.drop(F.col("__unexpected"))` with `df.drop("__unexpected")` in GE's map-metric modules. The patch is applied automatically when the expectations module is loaded. With this patch:
+- **Pandas:** 28/28 rules pass
+- **Spark:** 27/28 rules pass (1 rule `products_compound_unique_product_id_name` may still fail due to a separate GE compound-columns issue)
 
 ---
 

@@ -252,12 +252,23 @@ class ExpectationBuilder:
         expectation_method = getattr(dataset, method_name)
 
         try:
-            result = expectation_method(**kwargs)
+            # catch_exceptions=True so GE returns structured error info instead of raising (helps Spark/compound-column paths)
+            kwargs_called = {**kwargs, "catch_exceptions": True}
+            result = expectation_method(**kwargs_called)
+            # Pass through exception_info from GE result when validation failed (GE uses catch_exceptions internally in some paths)
+            exc_info = result.get("exception_info")
+            if exc_info and isinstance(exc_info, dict):
+                msgs = [
+                    v.get("exception_message", str(v))
+                    for v in exc_info.values()
+                    if isinstance(v, dict) and v.get("raised_exception")
+                ]
+                exc_info = msgs[0] if len(msgs) == 1 else "; ".join(msgs) if msgs else str(exc_info)
             return {
                 "success": result.get("success", False),
                 "result": result,
                 "expectation_config": result.get("expectation_config", {}),
-                "exception_info": None,
+                "exception_info": exc_info if exc_info else None,
             }
         except Exception as e:
             return {

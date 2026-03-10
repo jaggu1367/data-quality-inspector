@@ -37,8 +37,11 @@ def _get_spark_session():
                 SparkSession.builder
                 .appName("dq-framework")
                 .config("spark.sql.legacy.timeParserPolicy", "LEGACY")
+                .config("spark.sql.execution.arrow.pyspark.enabled", "false")  # avoid pandasStructHandlingMode error in PySpark 3.5+ with GE compound-column toPandas
                 .getOrCreate()
             )
+        else:
+            spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "false")
         return spark
     except ImportError as e:
         raise ImportError(

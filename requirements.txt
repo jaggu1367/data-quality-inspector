@@ -1,7 +1,8 @@
 great-expectations==1.11.3
 sqlalchemy>=2.0.36
 pandas>=2.2.3
-pyspark>=3.4.0,<4
+pyspark>=3.4.0,<3.5  # 3.5+ has pandasStructHandlingMode/Arrow issues with GE compound-column toPandas
+setuptools>=65.0.0  # provides distutils for Python 3.12+ (required by PySpark toPandas)
 python-dotenv==1.0.0
 pydantic>=2.5.3
 pydantic-settings>=2.1.0

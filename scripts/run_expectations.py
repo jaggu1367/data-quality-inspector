@@ -16,6 +16,9 @@ Usage (from project root):
   python scripts/run_expectations.py --source-id customers_csv --send-report  # email report
   python scripts/run_expectations.py --source-id products_sqlite --log-results  # log results to console
 """
+# Ensure distutils available for Python 3.12+ (PySpark toPandas uses it for compound-column expectations)
+import setuptools  # noqa: F401
+
 import sys
 import os
 import argparse
