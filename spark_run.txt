@@ -1,0 +1,562 @@
+﻿python : Setting default log level to "WARN".
+At C:\Users\Jagadeesh Verri\AppData\Local\Temp\ps-script-be4cc362-7db6-42fa-b4d1-c5f0e444f446.ps1:82 char:79
++ ... inspector"; python scripts/run_expectations.py --source-id products_s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Setting default log level to "WARN".:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/03/10 23:35:04 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/03/10 23:35:09 WARN SizeEstimator: Failed to check whether UseCompressedOops is set; assuming yes
+
+[Stage 0:>                                                          (0 + 1) / 1]
+
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+============================================================
+Data Quality: Run active rules from data_quality_rules
+============================================================
+
+1. Initializing database...
+   Database ready.
+
+============================================================
+Source: products_sqlite (sqlite, engine=spark)
+============================================================
+  Rows: 500, Columns: ['product_id', 'product_name', 'category', 'price', 'stock_quantity', 'status']
+  Running active rules for 'products'...
+                                                                                
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 585.06it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 585.06it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 585.06it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 1/1 [00:00<?, ?it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 39.92it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 39.92it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 16.03it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 16.03it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 16.03it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 16.03it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 16.03it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 12.93it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 11.38it/s]
+26/03/10 23:35:18 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 120.45it/s]
+26/03/10 23:35:18 WARN ProcfsMetricsGetter: Exception when trying to compute pagesize, as a result reporting of ProcessTree metrics is stopped
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 107.44it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 24.75it/s] 
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 24.75it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 24.75it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 24.75it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 24.75it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 21.06it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 16.74it/s]
+26/03/10 23:35:19 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 364.91it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<00:00, 364.91it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 32.58it/s] 
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics:  88%|########7 | 7/8 [00:00<00:00, 32.58it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 19.22it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 19.22it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 19.22it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 19.22it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:00<00:00, 20.48it/s]
+26/03/10 23:35:19 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/10 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/10 [00:00<?, ?it/s]
+Calculating Metrics:  20%|##        | 2/10 [00:00<00:00, 498.49it/s]
+Calculating Metrics:  20%|##        | 2/10 [00:00<00:00, 332.39it/s]
+Calculating Metrics:  40%|####      | 4/10 [00:00<00:00, 34.94it/s] 
+Calculating Metrics:  40%|####      | 4/10 [00:00<00:00, 34.94it/s]
+Calculating Metrics:  40%|####      | 4/10 [00:00<00:00, 34.94it/s]
+Calculating Metrics:  60%|######    | 6/10 [00:00<00:00, 34.94it/s]
+Calculating Metrics:  60%|######    | 6/10 [00:00<00:00, 34.94it/s]
+[Stage 30:>                                                         (0 + 1) / 1]
+
+                                                                                
+
+Calculating Metrics:  90%|######### | 9/10 [00:01<00:00,  4.03it/s]
+Calculating Metrics:  90%|######### | 9/10 [00:01<00:00,  4.03it/s]
+Calculating Metrics:  90%|######### | 9/10 [00:01<00:00,  4.03it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:02<00:00,  4.03it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:02<00:00,  4.03it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:02<00:00,  4.03it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:02<00:00,  4.83it/s]
+26/03/10 23:35:21 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 120.16it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 120.16it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 53.38it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 53.38it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 63.42it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 63.42it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 45.07it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 30.75it/s]
+26/03/10 23:35:22 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 119.48it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 119.48it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 49.19it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 49.19it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 65.45it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 65.45it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 44.73it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 35.86it/s]
+26/03/10 23:35:22 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 157.71it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 157.71it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 44.72it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 44.72it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 61.43it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 61.43it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 39.50it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 31.77it/s]
+26/03/10 23:35:22 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 309.29it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 309.29it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 41.26it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 41.26it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 55.05it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 36.73it/s]
+26/03/10 23:35:23 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/6 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/6 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 2/6 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 2/6 [00:00<?, ?it/s]
+Calculating Metrics:  67%|######6   | 4/6 [00:00<00:00, 47.84it/s]
+Calculating Metrics:  67%|######6   | 4/6 [00:00<00:00, 47.84it/s]
+Calculating Metrics:  83%|########3 | 5/6 [00:00<00:00, 58.27it/s]
+Calculating Metrics:  83%|########3 | 5/6 [00:00<00:00, 58.27it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 31.33it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 31.33it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 31.33it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 31.33it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 31.28it/s]
+26/03/10 23:35:23 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/6 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/6 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 2/6 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 2/6 [00:00<?, ?it/s]
+Calculating Metrics:  67%|######6   | 4/6 [00:00<00:00, 40.24it/s]
+Calculating Metrics:  67%|######6   | 4/6 [00:00<00:00, 40.24it/s]
+Calculating Metrics:  83%|########3 | 5/6 [00:00<00:00, 50.03it/s]
+Calculating Metrics:  83%|########3 | 5/6 [00:00<00:00, 50.03it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 32.68it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 32.68it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 32.68it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 32.68it/s]
+Calculating Metrics: 100%|##########| 6/6 [00:00<00:00, 32.68it/s]
+26/03/10 23:35:23 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 247.96it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 247.96it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 48.45it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 48.13it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 65.66it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 65.66it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 43.55it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 37.80it/s]
+26/03/10 23:35:23 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/11 [00:00<?, ?it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 239.18it/s]
+Calculating Metrics:  18%|#8        | 2/11 [00:00<00:00, 239.18it/s]
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 53.35it/s] 
+Calculating Metrics:  36%|###6      | 4/11 [00:00<00:00, 53.35it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 72.00it/s]
+Calculating Metrics:  55%|#####4    | 6/11 [00:00<00:00, 72.00it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics:  82%|########1 | 9/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 54.45it/s]
+Calculating Metrics: 100%|##########| 11/11 [00:00<00:00, 42.60it/s]
+26/03/10 23:35:24 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/12 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/12 [00:00<?, ?it/s]
+Calculating Metrics:  17%|#6        | 2/12 [00:00<00:00, 226.18it/s]
+Calculating Metrics:  17%|#6        | 2/12 [00:00<00:00, 226.18it/s]
+Calculating Metrics:  33%|###3      | 4/12 [00:00<00:00, 53.83it/s] 
+Calculating Metrics:  33%|###3      | 4/12 [00:00<00:00, 53.55it/s]
+Calculating Metrics:  50%|#####     | 6/12 [00:00<00:00, 72.16it/s]
+Calculating Metrics:  50%|#####     | 6/12 [00:00<00:00, 72.16it/s]
+Calculating Metrics:  67%|######6   | 8/12 [00:00<00:00, 84.84it/s]
+Calculating Metrics:  67%|######6   | 8/12 [00:00<00:00, 84.84it/s]
+Calculating Metrics:  92%|#########1| 11/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics:  92%|#########1| 11/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics:  92%|#########1| 11/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics: 100%|##########| 12/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics: 100%|##########| 12/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics: 100%|##########| 12/12 [00:00<00:00, 45.59it/s]
+Calculating Metrics: 100%|##########| 12/12 [00:00<00:00, 35.16it/s]
+
+Calculating Metrics:   0%|          | 0/10 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/10 [00:00<?, ?it/s]
+Calculating Metrics:  20%|##        | 2/10 [00:00<00:00, 4984.32it/s]
+Calculating Metrics:  20%|##        | 2/10 [00:00<00:00, 4984.32it/s]
+[Stage 107:>                                                        (0 + 1) / 1]
+
+[Stage 108:========================>                             (91 + 8) / 200]
+
+[Stage 108:===============================>                     (118 + 8) / 200]
+
+[Stage 108:=========================================>           (158 + 8) / 200]
+
+[Stage 108:==================================================>  (192 + 8) / 200]
+
+                                                                                
+
+Calculating Metrics:  40%|####      | 4/10 [00:02<00:03,  1.59it/s]  
+Calculating Metrics:  40%|####      | 4/10 [00:02<00:03,  1.59it/s]
+Calculating Metrics:  40%|####      | 4/10 [00:02<00:03,  1.59it/s]
+Calculating Metrics:  60%|######    | 6/10 [00:02<00:02,  1.59it/s]
+26/03/10 23:35:27 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+26/03/10 23:35:27 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+26/03/10 23:35:27 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+Calculating Metrics:  60%|######    | 6/10 [00:02<00:02,  1.59it/s]
+[Stage 113:======================================>              (144 + 8) / 200]
+
+26/03/10 23:35:28 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+26/03/10 23:35:28 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+[Stage 113:===================================================> (196 + 4) / 200]
+
+26/03/10 23:35:28 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+26/03/10 23:35:28 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+                                                                                
+
+26/03/10 23:35:29 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+26/03/10 23:35:29 WARN WindowExec: No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+[Stage 118:==============================================>      (176 + 8) / 200]
+
+                                                                                
+
+Calculating Metrics:  90%|######### | 9/10 [00:05<00:00,  1.68it/s]
+Calculating Metrics:  90%|######### | 9/10 [00:05<00:00,  1.68it/s]
+Calculating Metrics:  90%|######### | 9/10 [00:05<00:00,  1.68it/s]
+[Stage 123:==========================================>          (162 + 8) / 200]
+
+                                                                                
+
+Calculating Metrics: 100%|##########| 10/10 [00:06<00:00,  1.44it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:06<00:00,  1.44it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:06<00:00,  1.44it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:06<00:00,  1.44it/s]
+Calculating Metrics: 100%|##########| 10/10 [00:06<00:00,  1.51it/s]
+26/03/10 23:35:31 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 30.06it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 30.06it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 30.06it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<00:00, 30.06it/s]
+26/03/10 23:35:31 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/3 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/3 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 1/3 [00:00<?, ?it/s]
+Calculating Metrics:  33%|###3      | 1/3 [00:00<?, ?it/s]
+Calculating Metrics:  67%|######6   | 2/3 [00:00<?, ?it/s]
+Calculating Metrics:  67%|######6   | 2/3 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 3/3 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 3/3 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 3/3 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 3/3 [00:00<?, ?it/s]
+26/03/10 23:35:31 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 1/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+Calculating Metrics: 100%|##########| 2/2 [00:00<?, ?it/s]
+26/03/10 23:35:31 WARN CacheManager: Asked to cache already cached data.
+
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:   0%|          | 0/8 [00:00<?, ?it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<?, ?it/s]
+Calculating Metrics:  25%|##5       | 2/8 [00:00<?, ?it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 53.58it/s]
+Calculating Metrics:  50%|#####     | 4/8 [00:00<00:00, 53.58it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 46.23it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 46.23it/s]
+Calculating Metrics:  62%|######2   | 5/8 [00:00<00:00, 46.23it/s]C:\Users\Jagadeesh 
+Verri\AppData\Local\Programs\Python\Python312\Lib\site-packages\pyspark\sql\pandas\utils.py:37: DeprecationWarning: 
+distutils Version classes are deprecated. Use packaging.version instead.
+  if LooseVersion(pandas.__version__) < LooseVersion(minimum_pandas_version):
+
+[Stage 133:>                                                        (0 + 1) / 1]
+
+                                                                                
+
+[Stage 139:>                                                        (0 + 1) / 1]
+
+                                                                                
+
+Calculating Metrics: 100%|##########| 8/8 [00:02<00:00, 46.23it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:02<00:00, 46.23it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:02<00:00, 46.23it/s]
+Calculating Metrics: 100%|##########| 8/8 [00:02<00:00,  3.94it/s]
+
+  RESULTS:
+    Overall: PASSED
+    Rules:   28/28 passed, 0 failed
+    [PASS] products_col_exist_product_id
+    [PASS] products_col_exist_product_name
+    [PASS] products_col_exist_category
+    [PASS] products_col_exist_price
+    [PASS] products_col_exist_stock_quantity
+    [PASS] products_col_exist_status
+    [PASS] products_type_list_product_id_int
+    [PASS] products_of_type_status_str
+    [PASS] products_of_type_product_name_str
+    [PASS] products_of_type_category_str
+    [PASS] products_not_null_product_id
+    [PASS] products_not_null_product_name
+    [PASS] products_not_null_category
+    [PASS] products_unique_product_id
+    [PASS] products_in_set_status
+    [PASS] products_not_in_set_status_bad
+    [PASS] products_between_price
+    [PASS] products_between_stock_quantity
+    [PASS] products_mean_between_price
+    [PASS] products_min_between_stock_quantity
+    [PASS] products_not_regex_status_no_digit
+    [PASS] products_regex_list_status
+    [PASS] products_length_between_product_name
+    [PASS] products_increasing_product_id
+    [PASS] products_table_row_count_between
+    [PASS] products_table_col_count_between
+    [PASS] products_table_cols_set
+    [PASS] products_compound_unique_product_id_name
+
+  --- Validation Results (as logged to validation_results) ---
+  source_id: products_sqlite
+  data_source: sqlite
+  path_or_table: data_store.db/products
+  rules_table: products
+  timestamp: 2026-03-10 23:35:15
+  summary: 28/28 passed, 0 failed
+  ---
+  [PASS] products_col_exist_product_id
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "product_id", "catch_exceptions": true}}, "exception_info": {"raised_exception...
+  [PASS] products_col_exist_product_name
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "product_name", "catch_exceptions": true}}, "exception_info": {"raised_excepti...
+  [PASS] products_col_exist_category
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "category", "catch_exceptions": true}}, "exception_info": {"raised_exception":...
+  [PASS] products_col_exist_price
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "price", "catch_exceptions": true}}, "exception_info": {"raised_exception": fa...
+  [PASS] products_col_exist_stock_quantity
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "stock_quantity", "catch_exceptions": true}}, "exception_info": {"raised_excep...
+  [PASS] products_col_exist_status
+      result: {"success": true, "result": {}, "expectation_config": {"expectation_type": "expect_column_to_exist", "kwargs": {"column": "status", "catch_exceptions": true}}, "exception_info": {"raised_exception": f...
+  [PASS] products_type_list_product_id_int
+      result: {"success": true, "result": {"observed_value": "LongType"}, "expectation_config": {"expectation_type": "expect_column_values_to_be_in_type_list", "kwargs": {"column": "product_id", "type_list": ["Long...
+  [PASS] products_of_type_status_str
+      result: {"success": true, "result": {"observed_value": "StringType"}, "expectation_config": {"expectation_type": "expect_column_values_to_be_of_type", "kwargs": {"column": "status", "type_": "StringType", "ca...
+  [PASS] products_of_type_product_name_str
+      result: {"success": true, "result": {"observed_value": "StringType"}, "expectation_config": {"expectation_type": "expect_column_values_to_be_of_type", "kwargs": {"column": "product_name", "type_": "StringType...
+  [PASS] products_of_type_category_str
+      result: {"success": true, "result": {"observed_value": "StringType"}, "expectation_config": {"expectation_type": "expect_column_values_to_be_of_type", "kwargs": {"column": "category", "type_": "StringType", "...
+  [PASS] products_not_null_product_id
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": []}, "expectation_config": {"expectation_type": "expect_column_values_to...
+  [PASS] products_not_null_product_name
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": []}, "expectation_config": {"expectation_type": "expect_column_values_to...
+  [PASS] products_not_null_category
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": []}, "expectation_config": {"expectation_type": "expect_column_values_to...
+  [PASS] products_unique_product_id
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_in_set_status
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_not_in_set_status_bad
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_between_price
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_between_stock_quantity
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_mean_between_price
+      result: {"success": true, "result": {"observed_value": 152.35922}, "expectation_config": {"expectation_type": "expect_column_mean_to_be_between", "kwargs": {"column": "price", "min_value": 1, "max_value": 500...
+  [PASS] products_min_between_stock_quantity
+      result: {"success": true, "result": {"observed_value": 0}, "expectation_config": {"expectation_type": "expect_column_min_to_be_between", "kwargs": {"column": "stock_quantity", "min_value": 0, "max_value": 100...
+  [PASS] products_not_regex_status_no_digit
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_regex_list_status
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_length_between_product_name
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_increasing_product_id
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  [PASS] products_table_row_count_between
+      result: {"success": true, "result": {"observed_value": 500}, "expectation_config": {"expectation_type": "expect_table_row_count_to_be_between", "kwargs": {"min_value": 1, "max_value": 1000000, "catch_exceptio...
+  [PASS] products_table_col_count_between
+      result: {"success": true, "result": {"observed_value": 6}, "expectation_config": {"expectation_type": "expect_table_column_count_to_be_between", "kwargs": {"min_value": 1, "max_value": 20, "catch_exceptions":...
+  [PASS] products_table_cols_set
+      result: {"success": true, "result": {"observed_value": ["category", "price", "product_id", "product_name", "status", "stock_quantity"]}, "expectation_config": {"expectation_type": "expect_table_columns_to_mat...
+  [PASS] products_compound_unique_product_id_name
+      result: {"success": true, "result": {"element_count": 500, "unexpected_count": 0, "unexpected_percent": 0.0, "partial_unexpected_list": [], "missing_count": 0, "missing_percent": 0.0, "unexpected_percent_tota...
+  ---
+
+============================================================
+============================================================
+SUCCESS: The process with PID 9688 (child process of PID 24196) has been terminated.
+SUCCESS: The process with PID 24196 (child process of PID 3344) has been terminated.
+SUCCESS: The process with PID 3344 (child process of PID 25036) has been terminated.

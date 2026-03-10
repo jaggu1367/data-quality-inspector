@@ -5,6 +5,7 @@ Output directory configured in config/dq_report_config.json.
 Uses HTML template from report_templates/dq_report.html when available.
 """
 
+import json
 import os
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -75,17 +76,21 @@ def _build_layer2_html(dq_report: Dict[str, Any], source_info: Dict[str, Any]) -
         title = "Pass" if ok else "Fail"
         row_class = "pass" if ok else "fail"
         column = _extract_column(rule_result)
-        detail = ""
+        # Build Validation Details: full result JSON (same as validation_results.result column)
+        result_json = rule_result.get("result")
+        detail_parts = []
         if not ok:
             exc = rule_result.get("exception_info")
             if exc:
-                detail = _escape_html((exc or "")[:200])
-            else:
-                res = rule_result.get("result") or {}
-                inner = res.get("result") if isinstance(res, dict) else res
-                if isinstance(inner, dict) and "unexpected_count" in inner:
-                    detail = f"Unexpected count: {inner['unexpected_count']}"
-        detail_cell = f'<span class="detail">{_escape_html(detail)}</span>' if detail else ""
+                detail_parts.append(_escape_html((exc or "")[:500]))
+        if result_json is not None:
+            try:
+                json_str = json.dumps(result_json, indent=2, default=str)
+                detail_parts.append(f'<pre class="result-json">{_escape_html(json_str)}</pre>')
+            except (TypeError, ValueError):
+                detail_parts.append(_escape_html(str(result_json)[:500]))
+        detail = "<br>".join(detail_parts) if detail_parts else ""
+        detail_cell = f'<span class="detail">{detail}</span>' if detail else ""
         rows.append(
             f"        <tr class=\"{row_class}\">"
             f"<td class=\"sno-cell\">{sno}</td>"
@@ -187,6 +192,7 @@ def build_html_report(
     .rules .fail {{ background: #fff5f5; }}
     .rules .fail .status-icon {{ color: #c33; }}
     .detail {{ font-size: 0.9em; color: #666; }}
+    .result-json {{ font-size: 0.8em; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; overflow-x: auto; max-height: 12em; overflow-y: auto; margin: 0.25rem 0; white-space: pre-wrap; word-break: break-word; }}
   </style>
 </head>
 <body>
