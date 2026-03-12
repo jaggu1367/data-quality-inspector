@@ -367,5 +367,29 @@
     "rules_table_name": "orders",
     "column_name": "age",
     "description": "Age must be non-negative"
+  },
+  {
+    "rule_name": "orders_product_id_references_products",
+    "expectation_type": "expect_column_values_to_reference",
+    "kwargs": {
+      "column": "product_id",
+      "reference_source_id": "products_csv",
+      "reference_column": "product_id"
+    },
+    "rules_table_name": "orders",
+    "column_name": "product_id",
+    "description": "product_id must reference products.product_id"
+  },
+  {
+    "rule_name": "orders_customer_id_references_customers",
+    "expectation_type": "expect_column_values_to_reference",
+    "kwargs": {
+      "column": "customer_id",
+      "reference_source_id": "customers_csv",
+      "reference_column": "customer_id"
+    },
+    "rules_table_name": "orders",
+    "column_name": "customer_id",
+    "description": "customer_id must reference customers.customer_id"
   }
 ]

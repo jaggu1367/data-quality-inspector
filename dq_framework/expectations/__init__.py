@@ -13,7 +13,13 @@ apply_ge_spark_patch()
 from dq_framework.expectations.expectation_builder import (
     ExpectationBuilder,
     PandasDataset,
+    REFERENTIAL_INTEGRITY_EXPECTATION,
     SparkDataset,
 )
 
-__all__ = ["ExpectationBuilder", "PandasDataset", "SparkDataset"]
+__all__ = [
+    "ExpectationBuilder",
+    "PandasDataset",
+    "REFERENTIAL_INTEGRITY_EXPECTATION",
+    "SparkDataset",
+]

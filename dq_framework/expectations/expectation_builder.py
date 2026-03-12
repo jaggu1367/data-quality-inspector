@@ -5,7 +5,7 @@ Supports both pandas and PySpark DataFrames.
 """
 
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -44,6 +44,7 @@ PANDAS_TO_SPARK_TYPE_MAP = {
 
 
 CUSTOM_SQL_EXPECTATION = "expect_no_rows_matching_condition"
+REFERENTIAL_INTEGRITY_EXPECTATION = "expect_column_values_to_reference"
 
 
 def _sql_condition_to_pandas_query(condition: str) -> str:
@@ -112,6 +113,92 @@ def _execute_custom_sql_validation(
             "result": None,
             "expectation_config": {
                 "expectation_type": CUSTOM_SQL_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": f"{str(e)}\n{traceback.format_exc()}",
+        }
+
+
+def _execute_referential_integrity_validation(
+    df: Union[pd.DataFrame, Any],
+    kwargs: Dict[str, Any],
+    reference_df: Optional[Union[pd.DataFrame, Any]],
+) -> Dict[str, Any]:
+    """
+    Execute referential integrity validation: values in column must exist in reference_column of reference_df.
+    Pass if all non-null child values are in the parent set; fail otherwise.
+    Supports both pandas and PySpark DataFrames.
+    """
+    column = kwargs.get("column")
+    reference_column = kwargs.get("reference_column")
+    if not column or not reference_column:
+        return {
+            "success": False,
+            "result": {"error": "column and reference_column are required in kwargs"},
+            "expectation_config": {
+                "expectation_type": REFERENTIAL_INTEGRITY_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": "column and reference_column are required in kwargs",
+        }
+    if reference_df is None:
+        return {
+            "success": False,
+            "result": {"error": "reference_data not provided for referential integrity rule"},
+            "expectation_config": {
+                "expectation_type": REFERENTIAL_INTEGRITY_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": "reference_data not provided; ensure reference_source_id is loaded",
+        }
+    try:
+        if _is_spark_dataframe(df):
+            from pyspark.sql import functions as F
+
+            ref_valid = (
+                reference_df.select(F.col(reference_column).alias("_ref_val"))
+                .dropna()
+                .distinct()
+            )
+            violating_df = (
+                df.join(ref_valid, df[column] == ref_valid["_ref_val"], "left_anti")
+                .filter(F.col(column).isNotNull())
+            )
+            violation_count = violating_df.count()
+            violating_values = (
+                violating_df.select(column)
+                .distinct()
+                .limit(100)
+                .rdd.flatMap(lambda x: x)
+                .collect()
+            )
+        else:
+            valid_set = set(reference_df[reference_column].dropna().unique())
+            child_values = df[column].dropna()
+            violating = child_values[~child_values.isin(valid_set)]
+            violation_count = len(violating)
+            violating_values = violating.unique().tolist()[:100]
+        success = violation_count == 0
+        return {
+            "success": success,
+            "result": {
+                "violation_count": violation_count,
+                "violating_values": violating_values,
+                "element_count": violation_count,
+            },
+            "expectation_config": {
+                "expectation_type": REFERENTIAL_INTEGRITY_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": None,
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "result": None,
+            "expectation_config": {
+                "expectation_type": REFERENTIAL_INTEGRITY_EXPECTATION,
                 "kwargs": kwargs,
             },
             "exception_info": f"{str(e)}\n{traceback.format_exc()}",
@@ -298,12 +385,16 @@ class ExpectationBuilder:
             "expect_table_column_count_to_equal": "expect_table_column_count_to_equal",
             "expect_table_columns_to_match_ordered_list": "expect_table_columns_to_match_ordered_list",
             "expect_table_columns_to_match_set": "expect_table_columns_to_match_set",
-            "expect_compound_columns_to_be_unique": "expect_compound_columns_to_be_unique",
+            "expect_compound_columns_to_be_unique":             "expect_compound_columns_to_be_unique",
             CUSTOM_SQL_EXPECTATION: CUSTOM_SQL_EXPECTATION,
+            REFERENTIAL_INTEGRITY_EXPECTATION: REFERENTIAL_INTEGRITY_EXPECTATION,
         }
 
     def build_expectation(
-        self, rule: DataQualityRule, dataset: Union[PandasDataset, SparkDataset]
+        self,
+        rule: DataQualityRule,
+        dataset: Union[PandasDataset, SparkDataset],
+        reference_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Build and execute an expectation based on a rule."""
         expectation_type = rule.expectation_type
@@ -316,6 +407,19 @@ class ExpectationBuilder:
         if expectation_type == CUSTOM_SQL_EXPECTATION:
             raw_df = dataset.df
             return _execute_custom_sql_validation(raw_df, kwargs)
+
+        # Referential integrity - requires reference_data from parent source
+        if expectation_type == REFERENTIAL_INTEGRITY_EXPECTATION:
+            raw_df = dataset.df
+            ref_source_id = kwargs.get("reference_source_id")
+            ref_df = (reference_data or {}).get(ref_source_id) if ref_source_id else None
+            exec_result = _execute_referential_integrity_validation(raw_df, kwargs, ref_df)
+            return {
+                "success": exec_result.get("success", False),
+                "result": exec_result.get("result"),
+                "expectation_config": exec_result.get("expectation_config", {}),
+                "exception_info": exec_result.get("exception_info"),
+            }
 
         # Map Pandas type names to Spark type names when using Spark
         if isinstance(dataset, SparkDataset):
@@ -363,7 +467,10 @@ class ExpectationBuilder:
             }
 
     def validate_dataframe(
-        self, df: Union[pd.DataFrame, Any], rules: List[DataQualityRule]
+        self,
+        df: Union[pd.DataFrame, Any],
+        rules: List[DataQualityRule],
+        reference_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Validate a pandas or PySpark DataFrame against multiple rules."""
         if _is_spark_dataframe(df):
@@ -373,7 +480,9 @@ class ExpectationBuilder:
         results = {}
         for rule in rules:
             try:
-                result = self.build_expectation(rule, ge_dataset)
+                result = self.build_expectation(
+                    rule, ge_dataset, reference_data=reference_data
+                )
                 results[rule.rule_name] = result
             except Exception as e:
                 results[rule.rule_name] = {

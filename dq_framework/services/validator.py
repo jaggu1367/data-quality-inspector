@@ -45,9 +45,12 @@ class DataQualityValidator:
         data_source: Optional[str] = None,
         source_table: Optional[str] = None,
         save_results: bool = True,
+        reference_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Validate a dataset against all active rules for that data source.
+        reference_data: Optional dict mapping source_id -> DataFrame for referential
+            integrity rules (expect_column_values_to_reference).
         """
         rules = self._rule_manager.get_rules_by_rules_table_name(
             data_source_name, active_only=True
@@ -61,7 +64,9 @@ class DataQualityValidator:
                 "summary": {"total_rules": 0, "passed": 0, "failed": 0},
             }
 
-        validation_results = self._expectation_builder.validate_dataframe(df, rules)
+        validation_results = self._expectation_builder.validate_dataframe(
+            df, rules, reference_data=reference_data
+        )
 
         if save_results:
             self._result_repo.add_batch(

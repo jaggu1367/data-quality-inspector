@@ -27,6 +27,12 @@
       "rules_table": "orders"
     },
     {
+      "source_id": "products_csv",
+      "data_source": "csv",
+      "path": "data/products.csv",
+      "rules_table": "products"
+    },
+    {
       "source_id": "products_sqlite",
       "data_source": "sqlite",
       "database": "data_store.db",

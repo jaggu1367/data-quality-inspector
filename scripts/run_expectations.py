@@ -31,9 +31,10 @@ if _root not in sys.path:
 
 from dq_framework.core import db_manager
 from dq_framework.data import load_data_from_source, load_sources_config
+from dq_framework.expectations import REFERENTIAL_INTEGRITY_EXPECTATION
 from dq_framework.reports import load_reports_config, maybe_write_html_report, send_email_report
 from dq_framework.seeding import seed_data_quality_rules_if_empty
-from dq_framework.services import DataQualityValidator
+from dq_framework.services import DataQualityValidator, RuleManager
 
 DEFAULT_SOURCES_CONFIG = "config/data_sources.json"
 DEFAULT_REPORTS_CONFIG = "config/dq_report_config.json"
@@ -69,6 +70,35 @@ def _get_row_count(df) -> int:
 def _get_columns(df) -> list:
     """Get column list for pandas or Spark DataFrame."""
     return list(df.columns)
+
+
+def _build_reference_data(
+    rules: list,
+    sources_by_id: dict,
+    root: str,
+    engine: str,
+) -> dict:
+    """
+    Load reference sources for referential integrity rules.
+    Returns dict mapping reference_source_id -> DataFrame.
+    """
+    reference_data = {}
+    for rule in rules:
+        if getattr(rule, "expectation_type", None) != REFERENTIAL_INTEGRITY_EXPECTATION:
+            continue
+        ref_source_id = (rule.kwargs or {}).get("reference_source_id")
+        if not ref_source_id or ref_source_id in reference_data:
+            continue
+        if ref_source_id not in sources_by_id:
+            continue
+        try:
+            ref_df, _ = load_data_from_source(
+                sources_by_id[ref_source_id], root, engine=engine
+            )
+            reference_data[ref_source_id] = ref_df
+        except Exception:
+            pass  # Skip if reference source fails to load
+    return reference_data
 
 
 def _log_validation_results_to_console(
@@ -110,6 +140,7 @@ def _run_one(
     source_config: dict,
     args: argparse.Namespace,
     root: str,
+    sources_by_id: dict,
 ) -> tuple[bool, dict, dict]:
     """Run expectations for one source. Returns (success, source_info, result)."""
     source_type = source_config.get("data_source", "csv")
@@ -166,6 +197,14 @@ def _run_one(
     data_source_val = source_config.get("data_source") or source_type or "csv"
     source_table_val = source_config.get("source_table") if source_type.lower() == "sqlite" else None
 
+    # Load reference data for referential integrity rules (e.g. product_id -> products)
+    reference_data = {}
+    with RuleManager() as rm:
+        rules = rm.get_rules_by_rules_table_name(rules_key, active_only=True)
+        reference_data = _build_reference_data(
+            rules, sources_by_id, root, engine=getattr(args, "engine", "pandas")
+        )
+
     with DataQualityValidator() as validator:
         result = validator.validate_dataset(
             df=df,
@@ -174,6 +213,7 @@ def _run_one(
             data_source=data_source_val,
             source_table=source_table_val,
             save_results=args.save_results,
+            reference_data=reference_data if reference_data else None,
         )
 
     total = result["summary"]["total_rules"]
@@ -268,7 +308,9 @@ def main():
         exit_code = 0
         for source_id in source_ids:
             source_config = sources_by_id[source_id]
-            success, source_info, result = _run_one(source_id, source_config, args, _root)
+            success, source_info, result = _run_one(
+                source_id, source_config, args, _root, sources_by_id
+            )
             if args.send_report and source_info and result:
                 try:
                     if send_email_report(source_info, result, args.reports_config, _root):
@@ -290,7 +332,9 @@ def main():
         print(f"\nError: Unknown source ID '{args.source_id}'. Available: {list(sources_by_id.keys())}")
         sys.exit(1)
 
-    success, source_info, result = _run_one(args.source_id, sources_by_id[args.source_id], args, _root)
+    success, source_info, result = _run_one(
+        args.source_id, sources_by_id[args.source_id], args, _root, sources_by_id
+    )
     if args.send_report and source_info and result:
         try:
             if send_email_report(source_info, result, args.reports_config, _root):
