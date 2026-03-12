@@ -43,6 +43,81 @@ PANDAS_TO_SPARK_TYPE_MAP = {
 }
 
 
+CUSTOM_SQL_EXPECTATION = "expect_no_rows_matching_condition"
+
+
+def _sql_condition_to_pandas_query(condition: str) -> str:
+    """Convert SQL-style condition to pandas query string."""
+    import re
+    s = condition.strip()
+    # IS NOT NULL -> .notna()
+    s = re.sub(r"(\w+)\s+IS\s+NOT\s+NULL", r"\1.notna()", s, flags=re.IGNORECASE)
+    # IS NULL -> .isna()
+    s = re.sub(r"(\w+)\s+IS\s+NULL", r"\1.isna()", s, flags=re.IGNORECASE)
+    # column IN ('a','b','c') -> column.isin(['a','b','c']) - avoids 'in' keyword in numexpr
+    s = re.sub(
+        r"(\w+)\s+IN\s+\(([^)]+)\)",
+        lambda m: f"{m.group(1)}.isin([{m.group(2)}])",
+        s,
+        flags=re.IGNORECASE,
+    )
+    # AND/OR -> and/or for Python
+    s = s.replace(" AND ", " and ").replace(" OR ", " or ")
+    return s
+
+
+def _execute_custom_sql_validation(
+    df: Union[pd.DataFrame, Any],
+    kwargs: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Execute custom SQL validation using valid_condition.
+    Pass if all rows satisfy valid_condition; fail if any row does not.
+    Supports both pandas and PySpark DataFrames.
+    """
+    valid_condition = kwargs.get("valid_condition")
+    if not valid_condition or not isinstance(valid_condition, str):
+        return {
+            "success": False,
+            "result": {"error": "valid_condition (string) is required"},
+            "expectation_config": {"expectation_type": CUSTOM_SQL_EXPECTATION, "kwargs": kwargs},
+            "exception_info": "valid_condition (string) is required in kwargs",
+        }
+    try:
+        if _is_spark_dataframe(df):
+            violating_df = df.filter(f"NOT ({valid_condition})")
+            violation_count = violating_df.count()
+        else:
+            pandas_cond = _sql_condition_to_pandas_query(valid_condition)
+            violating_df = df.query(f"not ({pandas_cond})")
+            violation_count = len(violating_df)
+        success = violation_count == 0
+        return {
+            "success": success,
+            "result": {
+                "valid_condition": valid_condition,
+                "violation_count": violation_count,
+                "element_count": violation_count,
+            },
+            "expectation_config": {
+                "expectation_type": CUSTOM_SQL_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": None,
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "result": None,
+            "expectation_config": {
+                "expectation_type": CUSTOM_SQL_EXPECTATION,
+                "kwargs": kwargs,
+            },
+            "exception_info": f"{str(e)}\n{traceback.format_exc()}",
+        }
+
+
 def _map_kwargs_for_spark(expectation_type: str, kwargs: Dict[str, Any]) -> Dict[str, Any]:
     """Transform rule kwargs from Pandas type names to Spark type names."""
     out = dict(kwargs)
@@ -224,6 +299,7 @@ class ExpectationBuilder:
             "expect_table_columns_to_match_ordered_list": "expect_table_columns_to_match_ordered_list",
             "expect_table_columns_to_match_set": "expect_table_columns_to_match_set",
             "expect_compound_columns_to_be_unique": "expect_compound_columns_to_be_unique",
+            CUSTOM_SQL_EXPECTATION: CUSTOM_SQL_EXPECTATION,
         }
 
     def build_expectation(
@@ -235,6 +311,11 @@ class ExpectationBuilder:
 
         if rule.column_name and "column" not in kwargs:
             kwargs["column"] = rule.column_name
+
+        # Custom SQL validation (valid_condition) - handled directly, not via GE
+        if expectation_type == CUSTOM_SQL_EXPECTATION:
+            raw_df = dataset.df
+            return _execute_custom_sql_validation(raw_df, kwargs)
 
         # Map Pandas type names to Spark type names when using Spark
         if isinstance(dataset, SparkDataset):

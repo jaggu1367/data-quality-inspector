@@ -1,6 +1,6 @@
 {
   "email": {
-    "enabled": true,
+    "enabled": false,
     "smtp_host": "localhost",
     "smtp_port": 1025,
     "use_tls": false,

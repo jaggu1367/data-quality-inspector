@@ -287,6 +287,85 @@
     "kwargs": {"column_list": ["customer_id", "email"]},
     "rules_table_name": "customers",
     "description": "customer_id+email compound unique"
+  },
+  {
+    "rule_name": "custom_sql_age_valid_range",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "age >= 0 AND age <= 120"},
+    "rules_table_name": "customers",
+    "column_name": "age",
+    "description": "Age must be between 0 and 120"
+  },
+  {
+    "rule_name": "custom_sql_customer_id_positive",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "customer_id > 0"},
+    "rules_table_name": "customers",
+    "column_name": "customer_id",
+    "description": "Customer ID must be positive"
+  },
+  {
+    "rule_name": "custom_sql_status_valid",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "status IN ('active', 'inactive', 'pending')"},
+    "rules_table_name": "customers",
+    "column_name": "status",
+    "description": "Status must be active, inactive, or pending"
+  },
+  {
+    "rule_name": "custom_sql_age_adult_range",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "age >= 18 AND age <= 100"},
+    "rules_table_name": "customers",
+    "column_name": "age",
+    "description": "Age must be between 18 and 100 (adult range)"
+  },
+  {
+    "rule_name": "custom_sql_customer_id_not_null",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "customer_id IS NOT NULL"},
+    "rules_table_name": "customers",
+    "column_name": "customer_id",
+    "description": "Customer ID must not be null"
+  },
+  {
+    "rule_name": "custom_sql_customer_id_upper_bound",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "customer_id <= 999999999"},
+    "rules_table_name": "customers",
+    "column_name": "customer_id",
+    "description": "Customer ID must not exceed 999999999"
+  },
+  {
+    "rule_name": "custom_sql_age_not_null_and_valid",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "age IS NOT NULL AND age >= 0 AND age <= 120"},
+    "rules_table_name": "customers",
+    "column_name": "age",
+    "description": "Age must not be null and must be between 0 and 120"
+  },
+  {
+    "rule_name": "custom_sql_customer_id_bounded",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "customer_id >= 1 AND customer_id <= 1000000"},
+    "rules_table_name": "customers",
+    "column_name": "customer_id",
+    "description": "Customer ID must be between 1 and 1000000"
+  },
+  {
+    "rule_name": "custom_sql_status_not_empty",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "status IS NOT NULL AND status != ''"},
+    "rules_table_name": "customers",
+    "column_name": "status",
+    "description": "Status must not be null or empty"
+  },
+  {
+    "rule_name": "custom_sql_age_non_negative",
+    "expectation_type": "expect_no_rows_matching_condition",
+    "kwargs": {"valid_condition": "age >= 0"},
+    "rules_table_name": "customers",
+    "column_name": "age",
+    "description": "Age must be non-negative"
   }
-
 ]
